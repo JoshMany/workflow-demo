@@ -14,7 +14,6 @@ export const initialWorkflowList: WorkflowItemType[] = [
 					actionTitle: "Send Greeting Email",
 					actionType: "email",
 					actionUUID: "1",
-					workflowUUID: "0",
 				},
 			},
 			{
@@ -25,7 +24,6 @@ export const initialWorkflowList: WorkflowItemType[] = [
 					actionTitle: "Send Notification",
 					actionType: "notification",
 					actionUUID: "2",
-					workflowUUID: "0",
 				},
 			},
 			{
@@ -36,7 +34,6 @@ export const initialWorkflowList: WorkflowItemType[] = [
 					actionTitle: "Initial Questionnaire",
 					actionType: "questionnaire",
 					actionUUID: "3",
-					workflowUUID: "0",
 				},
 			},
 			{
@@ -47,7 +44,6 @@ export const initialWorkflowList: WorkflowItemType[] = [
 					actionTitle: "Review",
 					actionType: "task",
 					actionUUID: "4",
-					workflowUUID: "0",
 				},
 			},
 		],
@@ -61,7 +57,6 @@ export const initialWorkflowList: WorkflowItemType[] = [
 				data: {
 					transitionType: "immediate",
 					transitionUUID: "1",
-					workflowUUID: "0",
 				},
 				markerEnd: {
 					type: MarkerType.ArrowClosed,
@@ -80,7 +75,6 @@ export const initialWorkflowList: WorkflowItemType[] = [
 				data: {
 					transitionType: "delayed",
 					transitionUUID: "2",
-					workflowUUID: "0",
 				},
 				markerEnd: {
 					type: MarkerType.ArrowClosed,
@@ -99,7 +93,6 @@ export const initialWorkflowList: WorkflowItemType[] = [
 				data: {
 					transitionType: "conditional",
 					transitionUUID: "3",
-					workflowUUID: "0",
 				},
 				markerEnd: {
 					type: MarkerType.ArrowClosed,

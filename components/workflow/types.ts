@@ -1,6 +1,10 @@
 import type {
 	Edge,
+	EdgeProps,
+	EdgeTypes,
 	Node,
+	NodeProps,
+	NodeTypes,
 	OnConnect,
 	OnEdgesChange,
 	OnNodesChange,
@@ -26,7 +30,6 @@ export type CustomNodeData = {
 	actionTitle: string;
 	actionType: ActionType;
 	actionUUID: string;
-	workflowUUID: string;
 };
 export type ActionNodeType = Node<CustomNodeData, "actionNode">;
 
@@ -35,7 +38,6 @@ export type transitionTypes = "immediate" | "delayed" | "conditional";
 export type CustomEdgeData = {
 	transitionType: transitionTypes;
 	transitionUUID: string;
-	workflowUUID: string;
 };
 export type TransitionEdgeType = Edge<CustomEdgeData, "transitionEdge">;
 
@@ -45,11 +47,12 @@ export interface WorkflowStoreStates {
 	CurrentWorkflowUUID: string;
 }
 export interface WorkflowStore extends WorkflowStoreStates {
-	nodeTypes: Record<string, ComponentType<ActionNodeType>>;
-	edgeTypes: Record<string, ComponentType<TransitionEdgeType>>;
+	nodeTypes: NodeTypes;
+	edgeTypes: EdgeTypes;
 
 	createWorkflow: () => void;
 	selectWorkflow: (uuid: string) => void;
+	setNodes: (nodes: ActionNodeType[]) => void;
 
 	onNodesChange: OnNodesChange<ActionNodeType>;
 	onEdgesChange: OnEdgesChange<TransitionEdgeType>;

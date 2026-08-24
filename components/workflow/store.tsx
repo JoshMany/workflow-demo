@@ -49,6 +49,19 @@ export const createWorkflowStore = () => {
 						CurrentWorkflowUUID: uuid,
 					});
 				},
+				setNodes: (nodes) =>
+					set((state) => ({
+						Workflows: state.Workflows.map((workflow) => {
+							if (workflow.UUID !== state.CurrentWorkflowUUID) {
+								return workflow;
+							}
+
+							return {
+								...workflow,
+								Nodes: nodes,
+							};
+						}),
+					})),
 
 				onNodesChange: (changes) =>
 					set((state) => ({
@@ -63,7 +76,6 @@ export const createWorkflowStore = () => {
 							};
 						}),
 					})),
-
 				onEdgesChange: (changes) =>
 					set((state) => ({
 						Workflows: state.Workflows.map((workflow) => {
@@ -94,6 +106,7 @@ export const createWorkflowStore = () => {
 			}),
 			{
 				name: "workflow-storage",
+				version: 1,
 				partialize: (state) => ({
 					Workflows: state.Workflows,
 					CurrentWorkflowUUID: state.CurrentWorkflowUUID,

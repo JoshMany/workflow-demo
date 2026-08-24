@@ -31,6 +31,7 @@ function WorkflowChart() {
 	const currentWorkflow = Workflows.find(
 		(workflow: WorkflowItemType) => workflow.UUID === CurrentWorkflowUUID,
 	);
+
 	const Nodes = currentWorkflow?.Nodes ?? [];
 	const Edges = currentWorkflow?.Edges ?? [];
 	const { resolvedTheme } = useTheme();
