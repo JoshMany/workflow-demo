@@ -14,13 +14,12 @@ import {
 	DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
 import { Separator } from "../ui/separator";
-import { WorkflowItemType } from "./types";
 
 export default function WorkflowSelector() {
 	const { Workflows, createWorkflow, selectWorkflow } = useWorkflowStore(
 		(store) => store,
 	);
-	const [activeWorkflow, setActiveWorkflow] = useState(Workflows[0].UUID);
+	const [activeWorkflow, setActiveWorkflow] = useState("0");
 
 	return (
 		<div className="h-full w-fit min-w-3xs max-w-sm">
@@ -44,40 +43,50 @@ export default function WorkflowSelector() {
 				}}
 				size={"lg"}
 				className={"w-full text-start"}
-			>
-				{Workflows.map((workflow: WorkflowItemType) => (
-					<ToggleGroupItem
-						value={workflow.UUID}
-						key={workflow.UUID}
-						size={"lg"}
-						className={"flex flex-row justify-between"}
-						render={
-							<div>
-								<span className="w-fit font-bold text-sm">{workflow.name}</span>
-								<DropdownMenu>
-									<DropdownMenuTrigger
-										render={
-											<Button variant="ghost" size={"icon"} className={"z-10"}>
-												<Ellipsis />
-											</Button>
-										}
-									/>
-									<DropdownMenuContent className="w-40" align="start">
-										<DropdownMenuGroup>
-											<DropdownMenuItem>Rename</DropdownMenuItem>
-											<DropdownMenuItem>Run Simulation</DropdownMenuItem>
-											<DropdownMenuSeparator />
-											<DropdownMenuItem variant="destructive">
-												Delete
-											</DropdownMenuItem>
-										</DropdownMenuGroup>
-									</DropdownMenuContent>
-								</DropdownMenu>
-							</div>
-						}
-					/>
-				))}
-			</ToggleGroup>
+				render={
+					<div>
+						{Object.entries(Workflows).map(([uuid, workflow]) => (
+							<ToggleGroupItem
+								value={uuid}
+								key={uuid}
+								size={"lg"}
+								className={"flex flex-row justify-between"}
+								nativeButton={false}
+								render={
+									<div>
+										<span className="w-fit font-bold text-sm">
+											{workflow.name}
+										</span>
+										<DropdownMenu>
+											<DropdownMenuTrigger
+												render={
+													<Button
+														variant="ghost"
+														size={"icon"}
+														className={"z-10"}
+													>
+														<Ellipsis />
+													</Button>
+												}
+											/>
+											<DropdownMenuContent className="w-40" align="start">
+												<DropdownMenuGroup>
+													<DropdownMenuItem>Rename</DropdownMenuItem>
+													<DropdownMenuItem>Run Simulation</DropdownMenuItem>
+													<DropdownMenuSeparator />
+													<DropdownMenuItem variant="destructive">
+														Delete
+													</DropdownMenuItem>
+												</DropdownMenuGroup>
+											</DropdownMenuContent>
+										</DropdownMenu>
+									</div>
+								}
+							/>
+						))}
+					</div>
+				}
+			/>
 		</div>
 	);
 }

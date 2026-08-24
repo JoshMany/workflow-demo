@@ -13,7 +13,6 @@ import type { ComponentType } from "react";
 
 //* Workflow Structure
 export type WorkflowItemType = {
-	UUID: string;
 	name: string;
 	Nodes: ActionNodeType[];
 	Edges: TransitionEdgeType[];
@@ -43,7 +42,7 @@ export type TransitionEdgeType = Edge<CustomEdgeData, "transitionEdge">;
 
 //* Workflow Store
 export interface WorkflowStoreStates {
-	Workflows: WorkflowItemType[];
+	Workflows: Record<string, WorkflowItemType>;
 	CurrentWorkflowUUID: string;
 }
 export interface WorkflowStore extends WorkflowStoreStates {

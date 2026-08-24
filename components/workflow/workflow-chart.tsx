@@ -11,11 +11,11 @@ import {
 	useReactFlow,
 } from "@xyflow/react";
 import { useTheme } from "next-themes";
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { useShallow } from "zustand/react/shallow";
 import { Button } from "@/components/ui/button";
 import { getLayoutedNodes } from "@/components/workflow/elk-layout";
 import { useWorkflowStore } from "@/providers/workflow-store-provider";
-import type { WorkflowItemType } from "./types";
 
 function WorkflowChart() {
 	const {
@@ -27,16 +27,36 @@ function WorkflowChart() {
 		nodeTypes,
 		edgeTypes,
 		setNodes,
-	} = useWorkflowStore((state) => state);
-	const currentWorkflow = Workflows.find(
-		(workflow: WorkflowItemType) => workflow.UUID === CurrentWorkflowUUID,
+	} = useWorkflowStore(
+		useShallow((state) => ({
+			Workflows: state.Workflows,
+			CurrentWorkflowUUID: state.CurrentWorkflowUUID,
+			onNodesChange: state.onNodesChange,
+			onEdgesChange: state.onEdgesChange,
+			onConnect: state.onConnect,
+			nodeTypes: state.nodeTypes,
+			edgeTypes: state.edgeTypes,
+			setNodes: state.setNodes,
+		})),
 	);
+
+	const currentWorkflow = Workflows[CurrentWorkflowUUID];
 
 	const Nodes = currentWorkflow?.Nodes ?? [];
 	const Edges = currentWorkflow?.Edges ?? [];
 	const { resolvedTheme } = useTheme();
 	const { fitView } = useReactFlow();
 	const nodesInitialized = useNodesInitialized();
+
+	// Evita el mismatch de hidratación: hasta que el componente no está montado
+	// (cliente), colorMode se mantiene en "light", igual que lo que renderiza
+	// el servidor. Tras el montaje, sigue el tema resuelto.
+	const [mounted, setMounted] = useState(false);
+	useEffect(() => {
+		setMounted(true);
+	}, []);
+
+	const colorMode = mounted && resolvedTheme === "dark" ? "dark" : "light";
 
 	const onLayout = useCallback(
 		async (direction: "DOWN" | "RIGHT") => {
@@ -79,7 +99,7 @@ function WorkflowChart() {
 				defaultEdgeOptions={{
 					animated: true,
 				}}
-				colorMode={resolvedTheme === "dark" ? "dark" : "light"}
+				colorMode={colorMode}
 			>
 				<Panel position="top-left">
 					<h2>{"Blank Workflow"}</h2>

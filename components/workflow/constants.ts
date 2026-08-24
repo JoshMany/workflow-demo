@@ -1,9 +1,8 @@
 import { MarkerType } from "@xyflow/react";
 import type { WorkflowItemType } from "@/components/workflow/types";
 
-export const initialWorkflowList: WorkflowItemType[] = [
-	{
-		UUID: "0",
+export const initialWorkflowList: Record<string, WorkflowItemType> = {
+	"0": {
 		name: "Default Workflow",
 		Nodes: [
 			{
@@ -104,4 +103,4 @@ export const initialWorkflowList: WorkflowItemType[] = [
 			},
 		],
 	},
-];
+};

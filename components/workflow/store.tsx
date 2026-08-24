@@ -4,10 +4,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { ActionNode } from "@/components/workflow/action-node";
 import TransitionEdge from "@/components/workflow/transition-edge";
-import type {
-	WorkflowItemType,
-	WorkflowStore,
-} from "@/components/workflow/types";
+import type { WorkflowStore } from "@/components/workflow/types";
 import { initialWorkflowList } from "./constants";
 
 //* Constants
@@ -32,15 +29,15 @@ export const createWorkflowStore = () => {
 				createWorkflow: () => {
 					const uuid = uuidv4();
 
-					const newWorkflow: WorkflowItemType = {
-						UUID: uuid,
-						name: "New Workflow",
-						Nodes: [],
-						Edges: [],
-					};
-
 					set((state) => ({
-						Workflows: [...state.Workflows, newWorkflow],
+						Workflows: {
+							...state.Workflows,
+							[uuid]: {
+								name: "New Workflow",
+								Nodes: [],
+								Edges: [],
+							},
+						},
 						CurrentWorkflowUUID: uuid,
 					}));
 				},
@@ -50,59 +47,63 @@ export const createWorkflowStore = () => {
 					});
 				},
 				setNodes: (nodes) =>
-					set((state) => ({
-						Workflows: state.Workflows.map((workflow) => {
-							if (workflow.UUID !== state.CurrentWorkflowUUID) {
-								return workflow;
-							}
+					set((state) => {
+						const uuid = state.CurrentWorkflowUUID;
+						const current = state.Workflows[uuid];
 
-							return {
-								...workflow,
-								Nodes: nodes,
-							};
-						}),
-					})),
+						return {
+							Workflows: {
+								...state.Workflows,
+								[uuid]: { ...current, Nodes: nodes },
+							},
+						};
+					}),
 
 				onNodesChange: (changes) =>
-					set((state) => ({
-						Workflows: state.Workflows.map((workflow) => {
-							if (workflow.UUID !== state.CurrentWorkflowUUID) {
-								return workflow;
-							}
+					set((state) => {
+						const uuid = state.CurrentWorkflowUUID;
+						const current = state.Workflows[uuid];
 
-							return {
-								...workflow,
-								Nodes: applyNodeChanges(changes, workflow.Nodes),
-							};
-						}),
-					})),
+						return {
+							Workflows: {
+								...state.Workflows,
+								[uuid]: {
+									...current,
+									Nodes: applyNodeChanges(changes, current.Nodes),
+								},
+							},
+						};
+					}),
 				onEdgesChange: (changes) =>
-					set((state) => ({
-						Workflows: state.Workflows.map((workflow) => {
-							if (workflow.UUID !== state.CurrentWorkflowUUID) {
-								return workflow;
-							}
+					set((state) => {
+						const uuid = state.CurrentWorkflowUUID;
+						const current = state.Workflows[uuid];
 
-							return {
-								...workflow,
-								Edges: applyEdgeChanges(changes, workflow.Edges),
-							};
-						}),
-					})),
+						return {
+							Workflows: {
+								...state.Workflows,
+								[uuid]: {
+									...current,
+									Edges: applyEdgeChanges(changes, current.Edges),
+								},
+							},
+						};
+					}),
 				onConnect: (connection) =>
-					set((state) => ({
-						Workflows: state.Workflows.map((workflow) => {
-							if (workflow.UUID !== state.CurrentWorkflowUUID) {
-								return workflow;
-							}
+					set((state) => {
+						const uuid = state.CurrentWorkflowUUID;
+						const current = state.Workflows[uuid];
 
-							return {
-								...workflow,
-
-								Edges: addEdge(connection, workflow.Edges),
-							};
-						}),
-					})),
+						return {
+							Workflows: {
+								...state.Workflows,
+								[uuid]: {
+									...current,
+									Edges: addEdge(connection, current.Edges),
+								},
+							},
+						};
+					}),
 			}),
 			{
 				name: "workflow-storage",
