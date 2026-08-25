@@ -1,21 +1,21 @@
 import type {
 	Edge,
-	EdgeProps,
 	EdgeTypes,
 	Node,
-	NodeProps,
 	NodeTypes,
 	OnConnect,
 	OnEdgesChange,
 	OnNodesChange,
 } from "@xyflow/react";
-import type { ComponentType } from "react";
 
 //* Workflow Structure
 export type WorkflowItemType = {
 	name: string;
 	Nodes: ActionNodeType[];
 	Edges: TransitionEdgeType[];
+	config?: {
+		is_default?: boolean;
+	};
 };
 
 //* Custom Action Node
@@ -52,6 +52,7 @@ export interface WorkflowStore extends WorkflowStoreStates {
 	createWorkflow: () => void;
 	selectWorkflow: (uuid: string) => void;
 	setNodes: (nodes: ActionNodeType[]) => void;
+	renameWorkflow: (uuid: string, name: string) => void;
 
 	onNodesChange: OnNodesChange<ActionNodeType>;
 	onEdgesChange: OnEdgesChange<TransitionEdgeType>;

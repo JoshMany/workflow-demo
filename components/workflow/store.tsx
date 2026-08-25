@@ -26,6 +26,7 @@ export const createWorkflowStore = () => {
 				nodeTypes: NodeTypes,
 				edgeTypes: EdgeTypes,
 
+				// Workflow Functions
 				createWorkflow: () => {
 					const uuid = uuidv4();
 
@@ -58,7 +59,36 @@ export const createWorkflowStore = () => {
 							},
 						};
 					}),
+				renameWorkflow: (uuid, newName) => {
+					if (uuid === "0") {
+						throw new Error(
+							"The default workflow cannot be renamed. Try duplicating the default workflow.",
+						);
+					}
 
+					if (newName.trim().toLowerCase() === "default workflow") {
+						throw new Error(
+							'The name "Default Workflow" is reserved for the default workflow template. Please assign a different name.',
+						);
+					}
+
+					set((state) => {
+						const workflow = state.Workflows[uuid];
+
+						if (!workflow) {
+							throw new Error(`Workflow "${uuid}" was not found.`);
+						}
+
+						return {
+							Workflows: {
+								...state.Workflows,
+								[uuid]: { ...workflow, name: newName.trim() },
+							},
+						};
+					});
+				},
+
+				// Flow Events
 				onNodesChange: (changes) =>
 					set((state) => {
 						const uuid = state.CurrentWorkflowUUID;

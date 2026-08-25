@@ -4,6 +4,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { WorkflowStoreProvider } from "@/providers/workflow-store-provider";
+import { Toaster } from "@/components/ui/toast";
 
 const geistSans = Geist({
 	variable: "--font-geist-sans",
@@ -36,6 +37,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
 				>
 					<TooltipProvider>
 						<WorkflowStoreProvider>{children}</WorkflowStoreProvider>
+						<Toaster />
 					</TooltipProvider>
 				</ThemeProvider>
 			</body>

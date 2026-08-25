@@ -83,7 +83,7 @@ function WorkflowChart() {
 	}, [nodesInitialized]);
 
 	return (
-		<div className="h-full w-full rounded-lg border bg-background">
+		<div className="flex flex-1 rounded-lg border bg-background">
 			<ReactFlow
 				nodes={Nodes}
 				edges={Edges}
@@ -102,7 +102,7 @@ function WorkflowChart() {
 				colorMode={colorMode}
 			>
 				<Panel position="top-left">
-					<h2>{"Blank Workflow"}</h2>
+					<h2>{currentWorkflow.name}</h2>
 				</Panel>
 				<Panel position="top-right">
 					<Button onClick={() => onLayout("DOWN")}>Vertical layout</Button>
@@ -110,7 +110,7 @@ function WorkflowChart() {
 				</Panel>
 				<Background />
 				<MiniMap />
-				<Controls />
+				<Controls showInteractive={false} />
 			</ReactFlow>
 		</div>
 	);
