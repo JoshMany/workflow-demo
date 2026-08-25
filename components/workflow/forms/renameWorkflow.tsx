@@ -1,10 +1,11 @@
+import { useForm } from "@tanstack/react-form";
 import type { Dispatch, SetStateAction } from "react";
+import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import {
 	Dialog,
 	DialogClose,
 	DialogContent,
-	DialogDescription,
 	DialogFooter,
 	DialogHeader,
 	DialogTitle,
@@ -17,12 +18,8 @@ import {
 	FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import * as z from "zod";
-import { useForm } from "@tanstack/react-form";
 import { toast } from "@/components/ui/toast";
 import { useWorkflowStore } from "@/providers/workflow-store-provider";
-import { DialogRootActions, DialogRootProps } from "@base-ui/react";
 
 const formSchema = z.object({
 	name: z.string().max(32, "Workflow name should be at most 32 characters."),
