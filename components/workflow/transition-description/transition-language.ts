@@ -1,6 +1,7 @@
 "use client";
 
-import type { TransitionDelay, TransitionType } from "./types";
+import type { transitionTypes } from "../types";
+import type { TransitionDelay } from "./types";
 
 function formatDelay(delay?: TransitionDelay): string {
 	if (!delay) {
@@ -13,7 +14,7 @@ function formatDelay(delay?: TransitionDelay): string {
 }
 
 export const TRANSITION_LANGUAGE: Record<
-	TransitionType,
+	transitionTypes,
 	(
 		source: string,
 		target: string,
@@ -26,9 +27,14 @@ export const TRANSITION_LANGUAGE: Record<
 	immediate: (source, target) =>
 		`As soon as ${source}, ${target} immediately, without any additional delay or condition.`,
 
-	delayed: (source, target, options) =>
+	time_delay: (source, target, options) =>
 		`Once ${source}, ${target} ${formatDelay(options?.delay)}.`,
 
-	conditional: (source, target, options) =>
+	condition: (source, target, options) =>
 		`Once ${source}, ${target} only when ${options?.condition ?? "the configured condition"} is met.`,
+
+	event: (source, target, options) =>
+		`Once ${source}, ${target} only when ${options?.condition ?? "the configured condition"} happens.`,
+	manual: (source, target, options) =>
+		`Once ${source}, ${target} immediately when ${options?.condition ?? "the configured condition"} happens.`,
 };

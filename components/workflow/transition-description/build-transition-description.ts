@@ -1,6 +1,7 @@
+import type { ActionType } from "../types";
 import { ACTION_LANGUAGE } from "./action-language";
 import { TRANSITION_LANGUAGE } from "./transition-language";
-import type { ActionType, TransitionDescriptionInput } from "./types";
+import type { TransitionDescriptionInput } from "./types";
 
 function describeAction(
 	title: string,

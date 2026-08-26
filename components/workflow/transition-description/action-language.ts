@@ -1,6 +1,6 @@
 "use client";
 
-import type { ActionType } from "./types";
+import type { ActionType } from "../types";
 
 type ActionLanguage = {
 	object: string;
@@ -15,7 +15,7 @@ export const ACTION_LANGUAGE: Record<ActionType, ActionLanguage> = {
 		execution: "will be sent",
 	},
 
-	notification: {
+	internal_notification: {
 		object: "notification",
 		completion: "has been sent",
 		execution: "will be sent",
@@ -27,15 +27,21 @@ export const ACTION_LANGUAGE: Record<ActionType, ActionLanguage> = {
 		execution: "will be presented",
 	},
 
-	"interview guide": {
+	interview: {
 		object: "interview guide",
 		completion: "has been delivered",
 		execution: "will be delivered",
 	},
 
-	task: {
+	manual_task: {
 		object: "task",
 		completion: "has been completed",
 		execution: "will be assigned",
+	},
+
+	condition: {
+		object: "condition",
+		completion: "has been met",
+		execution: "will be met",
 	},
 };

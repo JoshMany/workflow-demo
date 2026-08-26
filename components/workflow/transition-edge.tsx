@@ -10,12 +10,9 @@ import {
 	PopoverContent,
 	PopoverTrigger,
 } from "@/components/ui/popover";
-import {
-	type ActionType,
-	buildTransitionDescription,
-} from "@/components/workflow/transition-description";
+import { buildTransitionDescription } from "@/components/workflow/transition-description";
 import { Button } from "../ui/button";
-import type { TransitionEdgeType, transitionTypes } from "./types";
+import type { ActionType, TransitionEdgeType, transitionTypes } from "./types";
 
 export default function TransitionEdge({
 	id,
@@ -42,8 +39,10 @@ export default function TransitionEdge({
 
 	const LabelByType: Record<transitionTypes, string> = {
 		immediate: "Immediate",
-		delayed: "Delayed",
-		conditional: "Conditional",
+		time_delay: "Delayed",
+		condition: "Conditional",
+		event: "Event",
+		manual: "Manual",
 	};
 
 	const description =

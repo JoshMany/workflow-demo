@@ -19,12 +19,13 @@ const EdgeTypes = {
 export const createWorkflowStore = () => {
 	return create<WorkflowStore>()(
 		persist(
-			(set) => ({
+			(set, get) => ({
 				CurrentWorkflowUUID: "0",
 				Workflows: initialWorkflowList,
 
 				nodeTypes: NodeTypes,
 				edgeTypes: EdgeTypes,
+				OpenMenuNodeId: null,
 
 				// Workflow Functions
 				createWorkflow: () => {
@@ -88,6 +89,31 @@ export const createWorkflowStore = () => {
 					});
 				},
 
+				// Node Menu State
+				toggleNodeMenu: (nodeId) =>
+					set((state) => ({
+						OpenMenuNodeId: state.OpenMenuNodeId === nodeId ? null : nodeId,
+					})),
+				closeNodeMenu: (nodeId) =>
+					set((state) => ({
+						OpenMenuNodeId:
+							state.OpenMenuNodeId === nodeId ? null : state.OpenMenuNodeId,
+					})),
+
+				// Dialog State
+				nodeDialogId: null,
+				openDialog: false,
+				toggleNodeDialog: (state) => {
+					set(() => ({
+						openDialog: state,
+					}));
+				},
+				setNodeDialogId: (nodeId) => {
+					set(() => ({
+						nodeDialogId: nodeId,
+					}));
+				},
+
 				// Flow Events
 				onNodesChange: (changes) =>
 					set((state) => {
@@ -134,10 +160,36 @@ export const createWorkflowStore = () => {
 							},
 						};
 					}),
+
+				// Node Functions
+				getNodeData: (nodeId) => {
+					const state = get();
+					const workflow = state.Workflows[state.CurrentWorkflowUUID];
+					const node = workflow?.Nodes.find((n) => n.id === nodeId);
+					return node?.data;
+				},
+				setNodeData: (nodeId, data) => {
+					set((state) => {
+						const workflow = state.Workflows[state.CurrentWorkflowUUID];
+						if (!workflow) return {};
+
+						return {
+							Workflows: {
+								...state.Workflows,
+								[state.CurrentWorkflowUUID]: {
+									...workflow,
+									Nodes: workflow.Nodes.map((n) =>
+										n.id === nodeId ? { ...n, data } : n,
+									),
+								},
+							},
+						};
+					});
+				},
 			}),
 			{
 				name: "workflow-storage",
-				version: 1,
+				version: 1.3,
 				partialize: (state) => ({
 					Workflows: state.Workflows,
 					CurrentWorkflowUUID: state.CurrentWorkflowUUID,

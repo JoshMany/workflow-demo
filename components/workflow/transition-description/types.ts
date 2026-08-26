@@ -1,11 +1,4 @@
-export type ActionType =
-	| "email"
-	| "notification"
-	| "questionnaire"
-	| "interview guide"
-	| "task";
-
-export type TransitionType = "immediate" | "delayed" | "conditional";
+import type { ActionType, transitionTypes } from "../types";
 
 export type DelayUnit = "minute" | "hour" | "day";
 
@@ -27,7 +20,7 @@ export type TransitionDescriptionInput = {
 		title: string;
 		type: ActionType;
 	};
-	transitionType: TransitionType;
+	transitionType: transitionTypes;
 	delay?: TransitionDelay;
 	condition?: TransitionCondition;
 };

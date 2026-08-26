@@ -16,6 +16,7 @@ import { useShallow } from "zustand/react/shallow";
 import { Button } from "@/components/ui/button";
 import { getLayoutedNodes } from "@/components/workflow/elk-layout";
 import { useWorkflowStore } from "@/providers/workflow-store-provider";
+import EditEmailNode from "./forms/edit-email-node";
 
 function WorkflowChart() {
 	const {
@@ -112,6 +113,8 @@ function WorkflowChart() {
 				<MiniMap />
 				<Controls showInteractive={false} />
 			</ReactFlow>
+
+			<EditEmailNode />
 		</div>
 	);
 }
