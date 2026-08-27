@@ -21,7 +21,7 @@ export type DemoStore = WorkflowSlice &
 		setNodeDialogId: (nodeId: string | null) => void;
 	};
 
-export const useDemoStore = create<DemoStore>()(
+export const createDemoStore = create<DemoStore>()(
 	persist(
 		(set, get, store) => ({
 			...createWorkflowSlice(set, get, store),

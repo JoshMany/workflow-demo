@@ -15,7 +15,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
 import { Button } from "@/components/ui/button";
 import { getLayoutedNodes } from "@/components/workflow/elk-layout";
-import { useWorkflowStore } from "@/providers/workflow-store-provider";
+import { useDemoStore } from "@/providers/workflow-store-provider";
 import EditEmailNode from "./forms/edit-email-node";
 
 function WorkflowChart() {
@@ -28,7 +28,7 @@ function WorkflowChart() {
 		nodeTypes,
 		edgeTypes,
 		setNodes,
-	} = useWorkflowStore(
+	} = useDemoStore(
 		useShallow((state) => ({
 			Workflows: state.Workflows,
 			CurrentWorkflowUUID: state.CurrentWorkflowUUID,

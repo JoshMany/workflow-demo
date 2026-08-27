@@ -2,40 +2,29 @@
 
 import { createContext, type ReactNode, useContext, useState } from "react";
 import { useStore } from "zustand";
-import { createWorkflowStore } from "@/components/workflow/store";
-import type { WorkflowStore } from "@/components/workflow/types";
+import { createDemoStore, type DemoStore } from "@/store/demoStore";
 
-export type WorkflowStoreApi = ReturnType<typeof createWorkflowStore>;
+const DemoStoreContext = createContext<typeof createDemoStore | null>(null);
 
-export const WorkflowStoreContext = createContext<WorkflowStoreApi | undefined>(
-	undefined,
-);
-
-export interface WorkflowStoreProviderProps {
+type DemoStoreProviderProps = {
 	children: ReactNode;
-}
+};
 
-export const WorkflowStoreProvider = ({
-	children,
-}: WorkflowStoreProviderProps) => {
-	const [store] = useState(() => createWorkflowStore());
+export const DemoStoreProvider = ({ children }: DemoStoreProviderProps) => {
+	const [store] = useState(() => createDemoStore);
 	return (
-		<WorkflowStoreContext.Provider value={store}>
+		<DemoStoreContext.Provider value={store}>
 			{children}
-		</WorkflowStoreContext.Provider>
+		</DemoStoreContext.Provider>
 	);
 };
 
-export const useWorkflowStore = <T,>(
-	selector: (store: WorkflowStore) => T,
-): T => {
-	const workflowStoreContext = useContext(WorkflowStoreContext);
+export const useDemoStore = <T,>(selector: (store: DemoStore) => T): T => {
+	const demoStoreContext = useContext(DemoStoreContext);
 
-	if (!workflowStoreContext) {
-		throw new Error(
-			`useWorkflowStore must be used within WorkflowStoreProvider`,
-		);
+	if (!demoStoreContext) {
+		throw new Error(`useDemoStore must be used within DemoStoreProvider`);
 	}
 
-	return useStore(workflowStoreContext, selector);
+	return useStore(demoStoreContext, selector);
 };

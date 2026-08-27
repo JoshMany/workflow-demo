@@ -4,7 +4,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/toast";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { WorkflowStoreProvider } from "@/providers/workflow-store-provider";
+import { DemoStoreProvider } from "@/providers/workflow-store-provider";
 
 const geistSans = Geist({
 	variable: "--font-geist-sans",
@@ -36,7 +36,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
 					disableTransitionOnChange
 				>
 					<TooltipProvider>
-						<WorkflowStoreProvider>{children}</WorkflowStoreProvider>
+						<DemoStoreProvider>{children}</DemoStoreProvider>
 						<Toaster />
 					</TooltipProvider>
 				</ThemeProvider>

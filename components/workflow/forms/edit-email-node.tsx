@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/components/ui/toast";
-import { useWorkflowStore } from "@/providers/workflow-store-provider";
+import { useDemoStore } from "@/providers/workflow-store-provider";
 import {
 	Select,
 	SelectContent,
@@ -62,7 +62,7 @@ export default function EditEmailNode() {
 		toggleNodeDialog,
 		getNodeData,
 		setNodeData,
-	} = useWorkflowStore(
+	} = useDemoStore(
 		useShallow((state) => ({
 			NodeDialogId: state.nodeDialogId,
 			DialogState: state.openDialog,

@@ -9,7 +9,7 @@ import {
 	MessageSquareText,
 } from "lucide-react";
 import { type ReactNode, useRef, useState } from "react";
-import { useWorkflowStore } from "@/providers/workflow-store-provider";
+import { useDemoStore } from "@/providers/workflow-store-provider";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -39,7 +39,7 @@ export function ActionNode({ id, data }: NodeProps<ActionNodeType>) {
 		closeNodeMenu,
 		toggleNodeDialog,
 		setNodeDialogId,
-	} = useWorkflowStore((state) => state);
+	} = useDemoStore((state) => state);
 	const currentWorkflow = Workflows[CurrentWorkflowUUID];
 	const is_default = currentWorkflow?.config?.is_default || false;
 

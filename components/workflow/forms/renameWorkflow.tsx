@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/components/ui/toast";
-import { useWorkflowStore } from "@/providers/workflow-store-provider";
+import { useDemoStore } from "@/providers/workflow-store-provider";
 
 const formSchema = z.object({
 	name: z.string().max(32, "Workflow name should be at most 32 characters."),
@@ -34,7 +34,7 @@ export default function RenameWorkflowForm({
 	isOpen: boolean;
 	setIsOpen: Dispatch<SetStateAction<boolean>>;
 }) {
-	const { renameWorkflow, Workflows } = useWorkflowStore((state) => state);
+	const { renameWorkflow, Workflows } = useDemoStore((state) => state);
 	const actionWorkflow = Workflows?.[uuid];
 	const originalWorkflowName = actionWorkflow?.name;
 

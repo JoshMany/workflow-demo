@@ -3,7 +3,7 @@
 import { Ellipsis, MoreHorizontalIcon, Plus, Trash2Icon } from "lucide-react";
 import { useState } from "react";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { useWorkflowStore } from "@/providers/workflow-store-provider";
+import { useDemoStore } from "@/providers/workflow-store-provider";
 import { Button } from "../ui/button";
 import { ButtonGroup } from "../ui/button-group";
 import {
@@ -18,7 +18,7 @@ import { Separator } from "../ui/separator";
 import RenameWorkflowForm from "./forms/renameWorkflow";
 
 export default function WorkflowSelector() {
-	const { Workflows, createWorkflow, selectWorkflow } = useWorkflowStore(
+	const { Workflows, createWorkflow, selectWorkflow } = useDemoStore(
 		(store) => store,
 	);
 	const [activeWorkflow, setActiveWorkflow] = useState<string>("0");
