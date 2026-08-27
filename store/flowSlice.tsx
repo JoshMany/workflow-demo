@@ -1,0 +1,235 @@
+import type {
+	Edge,
+	EdgeTypes,
+	Node,
+	NodeTypes,
+	OnConnect,
+	OnEdgesChange,
+	OnNodesChange,
+} from "@xyflow/react";
+import { addEdge, applyEdgeChanges, applyNodeChanges } from "@xyflow/react";
+import type { StateCreator } from "zustand";
+import { ActionNode } from "@/components/workflow/action-node";
+import TransitionEdge from "@/components/workflow/transition-edge";
+import type { DemoStore } from "./demoStore";
+
+//* Custom Action Node
+export type BaseActionData = {
+	actionTitle: string;
+	actionUUID: string;
+};
+export type ActionType =
+	| "email"
+	| "internal_notification"
+	| "questionnaire"
+	| "interview"
+	| "manual_task"
+	| "condition";
+export type EmailRecipient =
+	| {
+			type: "candidate";
+	  }
+	| {
+			type: "admin";
+	  }
+	| {
+			type: "specific";
+			email: string;
+	  };
+export type EmailTriggerType = "button_click" | "link_click";
+export type EmailTrigger = {
+	id: string;
+	type: EmailTriggerType;
+};
+export type InterviewType = "phone" | "video" | "onsite";
+export type ActionConfigMap = {
+	email: EmailConfig;
+	internal_notification: InternalNotificationConfig;
+	questionnaire: QuestionnaireConfig;
+	interview: InterviewConfig;
+	manual_task: ManualTaskConfig;
+	condition: ConditionConfig;
+};
+export type CustomNodeData = {
+	[K in keyof ActionConfigMap]: BaseActionData & {
+		actionType: K;
+		config: ActionConfigMap[K];
+	};
+}[keyof ActionConfigMap];
+export type EmailConfig = {
+	subject: string;
+	recipient: EmailRecipient;
+	body: string;
+	trigger?: EmailTrigger;
+};
+export type InternalNotificationConfig = {
+	body: string;
+};
+export type QuestionnaireConfig = {
+	questionnaireUUID: string;
+};
+export type InterviewConfig = {
+	interviewer?: string;
+	durationMinutes?: number;
+	interviewType: InterviewType;
+};
+export type ManualTaskConfig = {
+	description: string;
+	assignee?: string;
+	dueDate?: string;
+};
+export type ConditionConfig = {
+	condition: string;
+};
+export type ActionNodeType = Node<CustomNodeData, "actionNode">;
+
+//* Custom Transition Edge
+export type TransitionType = "immediate" | "time_delay" | "event" | "condition";
+export type TransitionEdgeData =
+	| {
+			transitionUUID: string;
+			transitionType: "immediate";
+	  }
+	| {
+			transitionUUID: string;
+			transitionType: "time_delay";
+			delay: {
+				amount: number;
+				unit: "minutes" | "hours" | "days";
+			};
+	  }
+	| {
+			transitionUUID: string;
+			transitionType: "event";
+			event: {
+				triggerUUID: string;
+				description: string;
+			};
+	  }
+	| {
+			transitionUUID: string;
+			transitionType: "condition";
+			condition: {
+				operator: "greater_than_or_equal" | "less_than";
+				value: number;
+				description: string;
+			};
+	  };
+export type TransitionEdgeType = Edge<TransitionEdgeData, "transitionEdge">;
+
+export interface FlowSliceStates {
+	nodeTypes: NodeTypes;
+	edgeTypes: EdgeTypes;
+}
+
+export interface FlowSliceActions {
+	setNodes: (nodes: ActionNodeType[]) => void;
+	onNodesChange: OnNodesChange<ActionNodeType>;
+	onEdgesChange: OnEdgesChange<TransitionEdgeType>;
+	onConnect: OnConnect;
+	getNodeData: (nodeId: string) => CustomNodeData | undefined;
+	setNodeData: (nodeId: string, data: CustomNodeData) => void;
+}
+
+export type FlowSlice = FlowSliceStates & FlowSliceActions;
+
+//* Constants
+const NodeTypesState = {
+	actionNode: ActionNode,
+};
+
+const EdgeTypesState = {
+	transitionEdge: TransitionEdge,
+};
+
+export const createFlowSlice: StateCreator<
+	DemoStore,
+	[["zustand/persist", unknown]],
+	[],
+	FlowSlice
+> = (set, get) => ({
+	nodeTypes: NodeTypesState,
+	edgeTypes: EdgeTypesState,
+
+	setNodes: (nodes) =>
+		set((state) => {
+			const uuid = state.CurrentWorkflowUUID;
+			const current = state.Workflows[uuid];
+
+			return {
+				Workflows: {
+					...state.Workflows,
+					[uuid]: { ...current, Nodes: nodes },
+				},
+			};
+		}),
+	onNodesChange: (changes) =>
+		set((state) => {
+			const uuid = state.CurrentWorkflowUUID;
+			const current = state.Workflows[uuid];
+
+			return {
+				Workflows: {
+					...state.Workflows,
+					[uuid]: {
+						...current,
+						Nodes: applyNodeChanges(changes, current.Nodes),
+					},
+				},
+			};
+		}),
+	onEdgesChange: (changes) =>
+		set((state) => {
+			const uuid = state.CurrentWorkflowUUID;
+			const current = state.Workflows[uuid];
+
+			return {
+				Workflows: {
+					...state.Workflows,
+					[uuid]: {
+						...current,
+						Edges: applyEdgeChanges(changes, current.Edges),
+					},
+				},
+			};
+		}),
+	onConnect: (connection) =>
+		set((state) => {
+			const uuid = state.CurrentWorkflowUUID;
+			const current = state.Workflows[uuid];
+
+			return {
+				Workflows: {
+					...state.Workflows,
+					[uuid]: {
+						...current,
+						Edges: addEdge(connection, current.Edges),
+					},
+				},
+			};
+		}),
+	getNodeData: (nodeId) => {
+		const state = get();
+		const workflow = state.Workflows[state.CurrentWorkflowUUID];
+		const node = workflow?.Nodes.find((n) => n.id === nodeId);
+		return node?.data;
+	},
+	setNodeData: (nodeId, data) => {
+		set((state) => {
+			const workflow = state.Workflows[state.CurrentWorkflowUUID];
+			if (!workflow) return {};
+
+			return {
+				Workflows: {
+					...state.Workflows,
+					[state.CurrentWorkflowUUID]: {
+						...workflow,
+						Nodes: workflow.Nodes.map((n) =>
+							n.id === nodeId ? { ...n, data } : n,
+						),
+					},
+				},
+			};
+		});
+	},
+});
