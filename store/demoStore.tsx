@@ -51,7 +51,7 @@ export const createDemoStore = create<DemoStore>()(
 		}),
 		{
 			name: "workflow-storage",
-			version: 1.3,
+			version: 1.4,
 			partialize: (state) => ({
 				Workflows: state.Workflows,
 				CurrentWorkflowUUID: state.CurrentWorkflowUUID,

@@ -6,6 +6,7 @@ import type {
 	OnConnect,
 	OnEdgesChange,
 	OnNodesChange,
+	OnNodesDelete,
 } from "@xyflow/react";
 import { addEdge, applyEdgeChanges, applyNodeChanges } from "@xyflow/react";
 import type { StateCreator } from "zustand";
@@ -18,6 +19,7 @@ export type BaseActionData = {
 	actionTitle: string;
 	actionUUID: string;
 };
+
 export type ActionType =
 	| "email"
 	| "internal_notification"
@@ -120,11 +122,17 @@ export type TransitionEdgeType = Edge<TransitionEdgeData, "transitionEdge">;
 export interface FlowSliceStates {
 	nodeTypes: NodeTypes;
 	edgeTypes: EdgeTypes;
+	// Buffer transitorio: edges que React Flow está borrando junto con los nodos.
+	// React Flow dispara onEdgesChange ANTES que onNodesDelete, por lo que al
+	// llegar a onNodesDelete esos edges ya no existen en Workflows[].Edges. Se
+	// guardan aquí (con su data) para poder reconstruir las conexiones.
+	pendingRemovedEdges: TransitionEdgeType[];
 }
 
 export interface FlowSliceActions {
 	setNodes: (nodes: ActionNodeType[]) => void;
 	onNodesChange: OnNodesChange<ActionNodeType>;
+	onNodesDelete: OnNodesDelete<ActionNodeType>;
 	onEdgesChange: OnEdgesChange<TransitionEdgeType>;
 	onConnect: OnConnect;
 	getNodeData: (nodeId: string) => CustomNodeData | undefined;
@@ -142,6 +150,44 @@ const EdgeTypesState = {
 	transitionEdge: TransitionEdge,
 };
 
+/**
+ * Reconecta el grafo tras eliminar nodos: cada edge que entraba al nodo
+ * borrado se encadena con cada edge que salía de él.
+ *
+ * `removed` debe contener los edges originales (con su `data` de tipo
+ * TransitionEdgeData) que se borraron junto al nodo. La arista reconstruida
+ * conserva la transición del edge ENTRANTE (`...inEdge`).
+ */
+function reconnectAfterDeletion(
+	edges: TransitionEdgeType[],
+	removed: TransitionEdgeType[],
+	deletedIds: Set<string>,
+): TransitionEdgeType[] {
+	const result = [...edges];
+
+	for (const nodeId of deletedIds) {
+		const incomingEdges = removed.filter((edge) => edge.target === nodeId);
+		const outgoingEdges = removed.filter((edge) => edge.source === nodeId);
+
+		const reconnected = incomingEdges.flatMap((inEdge) =>
+			outgoingEdges.map((outEdge) => ({
+				...inEdge,
+				id: `${inEdge.id}-${outEdge.id}`,
+				source: inEdge.source,
+				target: outEdge.target,
+			})),
+		);
+
+		result.push(...reconnected);
+	}
+
+	// Al borrar varios nodos encadenados (A→B→C con B y C), descarta aristas que
+	// aún referencien un nodo eliminado para no dejar conexiones colgantes.
+	return result.filter(
+		(edge) => !deletedIds.has(edge.source) && !deletedIds.has(edge.target),
+	);
+}
+
 export const createFlowSlice: StateCreator<
 	DemoStore,
 	[["zustand/persist", unknown]],
@@ -150,6 +196,7 @@ export const createFlowSlice: StateCreator<
 > = (set, get) => ({
 	nodeTypes: NodeTypesState,
 	edgeTypes: EdgeTypesState,
+	pendingRemovedEdges: [],
 
 	setNodes: (nodes) =>
 		set((state) => {
@@ -178,10 +225,51 @@ export const createFlowSlice: StateCreator<
 				},
 			};
 		}),
+	onNodesDelete: (deleted) =>
+		set((state) => {
+			const uuid = state.CurrentWorkflowUUID;
+			const currentWorkflow = state.Workflows[uuid];
+
+			if (!currentWorkflow) return state;
+
+			const deletedIds = new Set(deleted.map((node) => node.id));
+
+			const removedEdges = state.pendingRemovedEdges.filter(
+				(edge) => deletedIds.has(edge.source) || deletedIds.has(edge.target),
+			);
+
+			const Edges = reconnectAfterDeletion(
+				currentWorkflow.Edges,
+				removedEdges,
+				deletedIds,
+			);
+
+			return {
+				Workflows: {
+					...state.Workflows,
+					[uuid]: {
+						...currentWorkflow,
+						Edges,
+					},
+				},
+				pendingRemovedEdges: [],
+			};
+		}),
 	onEdgesChange: (changes) =>
 		set((state) => {
 			const uuid = state.CurrentWorkflowUUID;
 			const current = state.Workflows[uuid];
+
+			// Al borrar un nodo, React Flow elimina sus edges conectados ANTES de
+			// llamar a onNodesDelete. Este es el único momento donde esos edges
+			// siguen existiendo con su data: los capturamos en el buffer.
+			const removeIds = new Set(
+				changes.filter((change) => change.type === "remove").map((c) => c.id),
+			);
+
+			const pendingRemovedEdges = removeIds.size
+				? current.Edges.filter((edge) => removeIds.has(edge.id))
+				: [];
 
 			return {
 				Workflows: {
@@ -191,6 +279,7 @@ export const createFlowSlice: StateCreator<
 						Edges: applyEdgeChanges(changes, current.Edges),
 					},
 				},
+				pendingRemovedEdges,
 			};
 		}),
 	onConnect: (connection) =>

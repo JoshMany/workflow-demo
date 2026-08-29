@@ -22,8 +22,6 @@ import {
 	FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { toast } from "@/components/ui/toast";
-import { useDemoStore } from "@/providers/workflow-store-provider";
 import {
 	Select,
 	SelectContent,
@@ -34,6 +32,8 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { toast } from "@/components/ui/toast";
+import { useDemoStore } from "@/providers/workflow-store-provider";
 
 const formSchema = z
 	.object({
