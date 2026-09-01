@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect } from "react";
 import { useForm, useSelector } from "@tanstack/react-form";
+import { useEffect } from "react";
 import * as z from "zod";
 import { useShallow } from "zustand/react/shallow";
 import { Button } from "@/components/ui/button";
@@ -138,9 +138,7 @@ export default function EditEmailNode() {
 		form.reset({
 			title: data?.actionTitle ?? "",
 			recipient:
-				data?.actionType === "email"
-					? data.config.recipient.type
-					: "candidate",
+				data?.actionType === "email" ? data.config.recipient.type : "candidate",
 			recipientEmail:
 				data?.actionType === "email" &&
 				data.config.recipient.type === "specific"
@@ -148,9 +146,7 @@ export default function EditEmailNode() {
 					: "",
 			body: data?.actionType === "email" ? data.config.body : "",
 			relatedTrigger:
-				data?.actionType === "email"
-					? (data.config.trigger?.id ?? "")
-					: "",
+				data?.actionType === "email" ? (data.config.trigger?.id ?? "") : "",
 			subject: data?.actionType === "email" ? data.config.subject : "",
 		});
 	}, [DialogState, NodeDialogId, getNodeData, form]);
