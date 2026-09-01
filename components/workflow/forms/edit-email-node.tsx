@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { useForm, useSelector } from "@tanstack/react-form";
 import * as z from "zod";
 import { useShallow } from "zustand/react/shallow";
@@ -25,9 +26,7 @@ import { Input } from "@/components/ui/input";
 import {
 	Select,
 	SelectContent,
-	SelectGroup,
 	SelectItem,
-	SelectLabel,
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
@@ -130,8 +129,37 @@ export default function EditEmailNode() {
 		if (!open) form.reset();
 	};
 
+	// Al abrir el diálogo (o cambiar de nodo), el formulario se reinicia con los
+	// valores actuales del nodo seleccionado.
+	useEffect(() => {
+		if (!DialogState || !NodeDialogId) return;
+
+		const data = getNodeData(NodeDialogId);
+		form.reset({
+			title: data?.actionTitle ?? "",
+			recipient:
+				data?.actionType === "email"
+					? data.config.recipient.type
+					: "candidate",
+			recipientEmail:
+				data?.actionType === "email" &&
+				data.config.recipient.type === "specific"
+					? data.config.recipient.email
+					: "",
+			body: data?.actionType === "email" ? data.config.body : "",
+			relatedTrigger:
+				data?.actionType === "email"
+					? (data.config.trigger?.id ?? "")
+					: "",
+			subject: data?.actionType === "email" ? data.config.subject : "",
+		});
+	}, [DialogState, NodeDialogId, getNodeData, form]);
+
 	return (
-		<Dialog open={DialogState} onOpenChange={toggleModal}>
+		<Dialog
+			open={DialogState && nodeData?.actionType === "email"}
+			onOpenChange={toggleModal}
+		>
 			<DialogContent>
 				<DialogHeader>
 					<DialogTitle>Edit Email</DialogTitle>
