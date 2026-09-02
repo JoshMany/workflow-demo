@@ -1,5 +1,8 @@
+"use client";
+
 import { Workflow } from "lucide-react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
 	Sidebar,
 	SidebarContent,
@@ -13,23 +16,30 @@ import {
 	SidebarRail,
 } from "@/components/ui/sidebar";
 
-// This is sample data.
-const data = {
-	navMain: [
-		{
-			title: "Content",
-			url: "/",
-			items: [
-				{
-					title: "Workflows",
-					url: "/",
-					isActive: true,
-				},
-			],
-		},
-	],
-};
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+	const currentPath = usePathname();
+
+	const data = {
+		navMain: [
+			{
+				title: "Main",
+				url: "/",
+				items: [
+					{
+						title: "Workflows",
+						url: "/",
+						isActive: currentPath === "/",
+					},
+					{
+						title: "Questionnaires",
+						url: "/questionnaires",
+						isActive: currentPath === "/questionnaires",
+					},
+				],
+			},
+		],
+	};
+
 	return (
 		<Sidebar {...props}>
 			<SidebarHeader>

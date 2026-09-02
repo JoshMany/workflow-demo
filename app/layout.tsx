@@ -1,26 +1,13 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import AppHeader from "@/components/app-header";
+import { AppSidebar } from "@/components/app-sidebar";
 import { ThemeProvider } from "@/components/theme-provider";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { Toaster } from "@/components/ui/toast";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { DemoStoreProvider } from "@/providers/workflow-store-provider";
-import {
-	SidebarInset,
-	SidebarProvider,
-	SidebarTrigger,
-} from "@/components/ui/sidebar";
-import { AppSidebar } from "@/components/app-sidebar";
-import { Separator } from "@/components/ui/separator";
-import {
-	Breadcrumb,
-	BreadcrumbItem,
-	BreadcrumbLink,
-	BreadcrumbList,
-	BreadcrumbPage,
-	BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
-import { ModeToggle } from "@/components/ui/theme-switch";
 
 const geistSans = Geist({
 	variable: "--font-geist-sans",
@@ -56,36 +43,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
 							<DemoStoreProvider>
 								<AppSidebar />
 								<SidebarInset>
-									<header className="flex h-fit py-2 shrink-0 items-center justify-between gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
-										<div className="flex items-center align-middle gap-2 px-4">
-											<SidebarTrigger className="-ml-1" />
-											<Separator
-												orientation="vertical"
-												className="mr-2 self-center data-[orientation=vertical]:h-4"
-											/>
-											<Breadcrumb>
-												<BreadcrumbList>
-													<BreadcrumbItem className="hidden md:block">
-														<BreadcrumbLink href="#">
-															Build Your Application
-														</BreadcrumbLink>
-													</BreadcrumbItem>
-													<BreadcrumbSeparator className="hidden md:block" />
-													<BreadcrumbItem>
-														<BreadcrumbPage>Data Fetching</BreadcrumbPage>
-													</BreadcrumbItem>
-												</BreadcrumbList>
-											</Breadcrumb>
-										</div>
-										<div className="px-4">
-											<ModeToggle />
-										</div>
-									</header>
+									<AppHeader />
 									<main className="flex flex-1 flex-col">{children}</main>
 								</SidebarInset>
 							</DemoStoreProvider>
 						</SidebarProvider>
-
 						<Toaster />
 					</TooltipProvider>
 				</ThemeProvider>

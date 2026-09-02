@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 
 function ItemGroup({ className, ...props }: React.ComponentProps<"div">) {
 	return (
+		// biome-ignore lint/a11y/useSemanticElements: Keep div for layout purposes, not a semantic group of items; also is a generic container for any type of child element, not just items.
 		<div
 			role="list"
 			data-slot="item-group"

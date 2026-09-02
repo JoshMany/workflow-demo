@@ -1,8 +1,7 @@
 "use client";
 
-import { Ellipsis, MoreHorizontalIcon, Plus, Trash2Icon } from "lucide-react";
+import { Ellipsis, Plus, Trash2Icon } from "lucide-react";
 import { useState } from "react";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useDemoStore } from "@/providers/workflow-store-provider";
 import { Button } from "../ui/button";
 import { ButtonGroup } from "../ui/button-group";
