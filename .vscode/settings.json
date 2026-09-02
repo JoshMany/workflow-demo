@@ -3,5 +3,9 @@
 		{
 			"file": "${workspaceFolder}/.github/commit-message-instructions.md"
 		}
-	]
+	],
+	"biome.suggestions": "action",
+	"biome.organizeImportsOnSave": true,
+	"editor.formatOnSave": true,
+	"editor.defaultFormatter": "biomejs.biome"
 }

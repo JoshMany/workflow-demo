@@ -21,8 +21,8 @@ const data = {
 			url: "/",
 			items: [
 				{
-					title: "Main",
-					url: "/dashboard",
+					title: "Workflows",
+					url: "/",
 					isActive: true,
 				},
 			],
@@ -35,7 +35,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 			<SidebarHeader>
 				<Link
 					className="flex items-center gap-2 text-lg font-semibold px-2 py-1"
-					href="/dashboard"
+					href="/"
 				>
 					<Workflow /> Workflow Demo
 				</Link>
