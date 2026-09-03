@@ -40,6 +40,18 @@ export type QuestionBranchType = {
 export type ChoiceOptionType = {
 	optionUUID: string;
 	label: string;
+	//* Points ("inciso") this option awards when selected. Optional: when options
+	//* define a score, the question is scored by the chosen option(s); otherwise
+	//* the question falls back to its own `score`.
+	score?: number;
+};
+
+//* Questionnaire-level scoring settings (percentage threshold to pass).
+export type QuestionnaireScoringConfig = {
+	//* Whether the questionnaire is scored at all.
+	enabled: boolean;
+	//* Minimum percentage (0-100) of points required to pass.
+	passThreshold: number;
 };
 
 //* Per-type config (mirrors ActionConfigMap pattern from flowSlice)
@@ -82,6 +94,7 @@ export type QuestionnaireSectionType = {
 export type QuestionnaireItemType = {
 	name: string;
 	description?: string;
+	scoring?: QuestionnaireScoringConfig;
 	Sections: QuestionnaireSectionType[];
 };
 
@@ -94,11 +107,21 @@ export interface QuestionnaireStoreActions {
 	//* Questionnaire lifecycle
 	createQuestionnaire: () => void;
 	removeQuestionnaire: (questionnaireUUID: string) => void;
+	restoreQuestionnaire: (
+		questionnaireUUID: string,
+		item: QuestionnaireItemType,
+		index?: number,
+	) => void;
 	selectQuestionnaire: (questionnaireUUID: string) => void;
 	renameQuestionnaire: (questionnaireUUID: string, name: string) => void;
+	duplicateQuestionnaire: (questionnaireUUID: string) => void;
 	updateQuestionnaire: (
 		questionnaireUUID: string,
-		patch: { name?: string; description?: string },
+		patch: {
+			name?: string;
+			description?: string;
+			scoring?: QuestionnaireScoringConfig;
+		},
 	) => void;
 
 	//* Sections
@@ -260,6 +283,7 @@ export const initialQuestionnaireList: Record<string, QuestionnaireItemType> = {
 		name: "Screening Questionnaire",
 		description:
 			"Sent to candidates right after applying to assess experience, availability and seniority.",
+		scoring: { enabled: true, passThreshold: 60 },
 		Sections: [
 			{
 				sectionUUID: "section-profile",
@@ -394,6 +418,7 @@ export const createQuestionnaireSlice: StateCreator<
 				...state.Questionnaires,
 				[questionnaireUUID]: {
 					name: "Untitled Questionnaire",
+					scoring: { enabled: false, passThreshold: 60 },
 					Sections: [
 						{
 							sectionUUID,
@@ -423,9 +448,42 @@ export const createQuestionnaireSlice: StateCreator<
 			};
 		}),
 
+	restoreQuestionnaire: (questionnaireUUID, item, index) =>
+		set((state) => {
+			if (state.Questionnaires[questionnaireUUID]) return state;
+
+			// Reinsert preserving the previous display order (Record insertion).
+			const entries = Object.entries(state.Questionnaires);
+			const insertAt =
+				index === undefined
+					? entries.length
+					: Math.max(0, Math.min(index, entries.length));
+			entries.splice(insertAt, 0, [questionnaireUUID, item]);
+
+			return { Questionnaires: Object.fromEntries(entries) };
+		}),
+
 	selectQuestionnaire: (questionnaireUUID) => {
 		set({ CurrentQuestionnaireUUID: questionnaireUUID });
 	},
+
+	duplicateQuestionnaire: (questionnaireUUID) =>
+		set((state) => {
+			const source = state.Questionnaires[questionnaireUUID];
+			if (!source) return state;
+
+			const uuid = uuidv4();
+			const copy = JSON.parse(JSON.stringify(source)) as QuestionnaireItemType;
+			copy.name = `${source.name} (Copy)`;
+
+			return {
+				Questionnaires: {
+					...state.Questionnaires,
+					[uuid]: copy,
+				},
+				CurrentQuestionnaireUUID: uuid,
+			};
+		}),
 
 	renameQuestionnaire: (questionnaireUUID, name) =>
 		set((state) => {
@@ -450,8 +508,12 @@ export const createQuestionnaireSlice: StateCreator<
 				questionnaireUUID,
 				(questionnaire) => ({
 					...questionnaire,
-					name: patch.name?.trim() ?? questionnaire.name,
-					description: patch.description?.trim() ?? questionnaire.description,
+					...patch,
+					name: patch.name !== undefined ? patch.name : questionnaire.name,
+					description:
+						patch.description !== undefined
+							? patch.description
+							: questionnaire.description,
 				}),
 			),
 		})),
