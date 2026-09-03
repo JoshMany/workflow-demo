@@ -1,8 +1,12 @@
 "use client";
 
 import {
+	ArrowDownIcon,
+	ArrowUpIcon,
 	ChevronDownIcon,
 	ChevronRightIcon,
+	Copy,
+	EyeIcon,
 	GitBranchIcon,
 	Plus,
 	Trash2Icon,
@@ -11,6 +15,15 @@ import { type ComponentProps, type ReactNode, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { useShallow } from "zustand/react/shallow";
 import { Button } from "@/components/ui/button";
+import {
+	Dialog,
+	DialogClose,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -43,6 +56,7 @@ import type {
 	QuestionnaireSectionType,
 	QuestionType,
 } from "@/store/questionnaireSlice";
+import QuestionnaireSimulator from "./questionnaire-simulator";
 
 type PtsInputProps = {
 	value?: number;
@@ -90,6 +104,12 @@ type QuestionTarget = {
 	prompt: string;
 };
 
+//* Section that a question can be moved into.
+type SectionOption = {
+	sectionUUID: string;
+	title: string;
+};
+
 const OPERATOR_OPTIONS: { value: AnswerOperator; label: string }[] = [
 	{ value: "equals", label: "is equal to" },
 	{ value: "not_equals", label: "is not equal to" },
@@ -106,16 +126,31 @@ function QuestionEditor({
 	question,
 	questionIndex,
 	allQuestions,
+	canMoveUp,
+	canMoveDown,
+	moveSections,
+	onMoveUp,
+	onMoveDown,
+	onDuplicate,
+	onMoveToSection,
 	onUpdate,
 	onRemove,
 }: {
 	question: QuestionItemType;
 	questionIndex: number;
 	allQuestions: QuestionTarget[];
+	canMoveUp: boolean;
+	canMoveDown: boolean;
+	moveSections: SectionOption[];
+	onMoveUp: () => void;
+	onMoveDown: () => void;
+	onDuplicate: () => void;
+	onMoveToSection: (sectionUUID: string) => void;
 	onUpdate: (next: QuestionItemType) => void;
 	onRemove: () => void;
 }) {
 	const [logicOpen, setLogicOpen] = useState(question.branches.length > 0);
+	const [moveTo, setMoveTo] = useState("");
 
 	const onBase = (patch: {
 		prompt?: string;
@@ -312,6 +347,64 @@ function QuestionEditor({
 				onChange={(e) => onBase({ description: e.target.value })}
 			/>
 
+			{/* Order / duplicate / move */}
+			<div className="flex flex-wrap items-center gap-1.5 border-t border-input/50 pt-2">
+				<span className="text-[0.65rem] font-medium text-muted-foreground">
+					Order
+				</span>
+				<Button
+					variant="ghost"
+					size="icon-sm"
+					disabled={!canMoveUp}
+					onClick={onMoveUp}
+					aria-label="Move question up"
+				>
+					<ArrowUpIcon />
+				</Button>
+				<Button
+					variant="ghost"
+					size="icon-sm"
+					disabled={!canMoveDown}
+					onClick={onMoveDown}
+					aria-label="Move question down"
+				>
+					<ArrowDownIcon />
+				</Button>
+				<Button
+					variant="ghost"
+					size="icon-sm"
+					onClick={onDuplicate}
+					aria-label="Duplicate question"
+				>
+					<Copy />
+				</Button>
+				{moveSections.length > 0 && (
+					<Select
+						value={moveTo}
+						onValueChange={(value) => {
+							if (!value) return;
+							setMoveTo(value);
+							onMoveToSection(value);
+							setMoveTo("");
+						}}
+					>
+						<SelectTrigger size="sm" aria-label="Move to section">
+							<SelectValue placeholder="Move to section…" />
+						</SelectTrigger>
+						<SelectContent>
+							{moveSections.map((section) => (
+								<SelectItem
+									key={section.sectionUUID}
+									value={section.sectionUUID}
+								>
+									{section.title}
+								</SelectItem>
+							))}
+						</SelectContent>
+					</Select>
+				)}
+			</div>
+
 			{renderConfig()}
 
 			{/* Conditional logic (branches) */}
@@ -368,6 +461,28 @@ function OptionsEditor({
 	const removeOption = (optionUUID: string) =>
 		onChange(options.filter((option) => option.optionUUID !== optionUUID));
 
+	const moveOption = (index: number, direction: "up" | "down") => {
+		const to = direction === "up" ? index - 1 : index + 1;
+		if (to < 0 || to >= options.length) return;
+		const next = [...options];
+		const [moved] = next.splice(index, 1);
+		next.splice(to, 0, moved);
+		onChange(next);
+	};
+
+	const duplicateOption = (index: number) => {
+		const option = options[index];
+		onChange([
+			...options.slice(0, index + 1),
+			{
+				...option,
+				optionUUID: uuidv4(),
+				label: option.label ? `${option.label} (copy)` : option.label,
+			},
+			...options.slice(index + 1),
+		]);
+	};
+
 	return (
 		<div className="grid gap-1.5">
 			<Label className="text-xs text-muted-foreground">
@@ -393,6 +508,32 @@ function OptionsEditor({
 							updateOption(option.optionUUID, { score: value })
 						}
 					/>
+					<Button
+						variant="ghost"
+						size="icon-xs"
+						disabled={index === 0}
+						onClick={() => moveOption(index, "up")}
+						aria-label={`Move option ${index + 1} up`}
+					>
+						<ArrowUpIcon />
+					</Button>
+					<Button
+						variant="ghost"
+						size="icon-xs"
+						disabled={index === options.length - 1}
+						onClick={() => moveOption(index, "down")}
+						aria-label={`Move option ${index + 1} down`}
+					>
+						<ArrowDownIcon />
+					</Button>
+					<Button
+						variant="ghost"
+						size="icon-xs"
+						onClick={() => duplicateOption(index)}
+						aria-label={`Duplicate option ${index + 1}`}
+					>
+						<Copy />
+					</Button>
 					<Button
 						variant="ghost"
 						size="icon"
@@ -712,22 +853,37 @@ function SectionEditor({
 	section,
 	sectionIndex,
 	allQuestions,
+	sections,
 	onUpdateSection,
 	onRemoveSection,
 	onAddQuestion,
 	onUpdateQuestion,
 	onRemoveQuestion,
+	onReorderQuestion,
+	onDuplicateQuestion,
+	onMoveQuestion,
 }: {
 	section: QuestionnaireSectionType;
 	sectionIndex: number;
 	allQuestions: QuestionTarget[];
+	sections: SectionOption[];
 	onUpdateSection: (patch: { title?: string; description?: string }) => void;
 	onRemoveSection: () => void;
 	onAddQuestion: (questionType: QuestionType) => void;
 	onUpdateQuestion: (questionUUID: string, next: QuestionItemType) => void;
 	onRemoveQuestion: (questionUUID: string) => void;
+	onReorderQuestion: (
+		sectionUUID: string,
+		questionUUID: string,
+		direction: "up" | "down",
+	) => void;
+	onDuplicateQuestion: (sectionUUID: string, questionUUID: string) => void;
+	onMoveQuestion: (questionUUID: string, toSectionUUID: string) => void;
 }) {
 	const [draftType, setDraftType] = useState<QuestionType>("single_choice");
+	const moveSections = sections.filter(
+		(sectionOption) => sectionOption.sectionUUID !== section.sectionUUID,
+	);
 
 	return (
 		<Panel className="flex flex-col gap-3">
@@ -759,16 +915,43 @@ function SectionEditor({
 				onChange={(e) => onUpdateSection({ description: e.target.value })}
 			/>
 
-			{section.Questions.map((question, index) => (
-				<QuestionEditor
-					key={question.questionUUID}
-					question={question}
-					questionIndex={index + 1}
-					allQuestions={allQuestions}
-					onUpdate={(next) => onUpdateQuestion(question.questionUUID, next)}
-					onRemove={() => onRemoveQuestion(question.questionUUID)}
-				/>
-			))}
+			{section.Questions.map((question, index) => {
+				const isFirst = index === 0;
+				const isLast = index === section.Questions.length - 1;
+				return (
+					<QuestionEditor
+						key={question.questionUUID}
+						question={question}
+						questionIndex={index + 1}
+						allQuestions={allQuestions}
+						canMoveUp={!isFirst}
+						canMoveDown={!isLast}
+						moveSections={moveSections}
+						onMoveUp={() =>
+							onReorderQuestion(
+								section.sectionUUID,
+								question.questionUUID,
+								"up",
+							)
+						}
+						onMoveDown={() =>
+							onReorderQuestion(
+								section.sectionUUID,
+								question.questionUUID,
+								"down",
+							)
+						}
+						onDuplicate={() =>
+							onDuplicateQuestion(section.sectionUUID, question.questionUUID)
+						}
+						onMoveToSection={(toSectionUUID) =>
+							onMoveQuestion(question.questionUUID, toSectionUUID)
+						}
+						onUpdate={(next) => onUpdateQuestion(question.questionUUID, next)}
+						onRemove={() => onRemoveQuestion(question.questionUUID)}
+					/>
+				);
+			})}
 
 			{/* Add question */}
 			<div className="flex items-center gap-2">
@@ -952,6 +1135,7 @@ function ScoringSettingsEditor({
 //* --- Main builder ----------------------------------------------------------
 
 export default function QuestionnaireBuilder() {
+	const [previewOpen, setPreviewOpen] = useState(false);
 	const CurrentQuestionnaireUUID = useDemoStore(
 		(state) => state.CurrentQuestionnaireUUID,
 	);
@@ -966,6 +1150,9 @@ export default function QuestionnaireBuilder() {
 		addQuestion,
 		updateQuestion,
 		removeQuestion,
+		duplicateQuestion,
+		moveQuestion,
+		reorderQuestion,
 		createQuestionnaire,
 	} = useDemoStore(
 		useShallow((state) => ({
@@ -976,6 +1163,9 @@ export default function QuestionnaireBuilder() {
 			addQuestion: state.addQuestion,
 			updateQuestion: state.updateQuestion,
 			removeQuestion: state.removeQuestion,
+			duplicateQuestion: state.duplicateQuestion,
+			moveQuestion: state.moveQuestion,
+			reorderQuestion: state.reorderQuestion,
 			createQuestionnaire: state.createQuestionnaire,
 		})),
 	);
@@ -1001,12 +1191,28 @@ export default function QuestionnaireBuilder() {
 				prompt: question.prompt || "Untitled question",
 			})),
 	);
+	const sections: SectionOption[] = questionnaire.Sections.map(
+		(section, index) => ({
+			sectionUUID: section.sectionUUID,
+			title: section.title || `Section ${index + 1}`,
+		}),
+	);
 
 	return (
 		<div className="flex min-h-0 flex-1 gap-4">
 			{/* Left: editable form */}
 			<div className="flex min-w-0 flex-1 flex-col gap-3 overflow-y-auto pr-1">
 				<Panel className="flex flex-col gap-3">
+					<div className="flex items-center justify-between">
+						<h3 className="text-sm font-semibold">Template details</h3>
+						<Button
+							variant="outline"
+							size="sm"
+							onClick={() => setPreviewOpen(true)}
+						>
+							<EyeIcon data-icon="inline-start" /> Preview as candidate
+						</Button>
+					</div>
 					<div className="grid gap-2">
 						<Label htmlFor="q-name" className="text-xs text-muted-foreground">
 							Template name
@@ -1059,6 +1265,7 @@ export default function QuestionnaireBuilder() {
 						section={section}
 						sectionIndex={index + 1}
 						allQuestions={allQuestions}
+						sections={sections}
 						onUpdateSection={(patch) =>
 							renameSection(section.sectionUUID, patch, uuid)
 						}
@@ -1071,6 +1278,15 @@ export default function QuestionnaireBuilder() {
 						}
 						onRemoveQuestion={(questionUUID) =>
 							removeQuestion(questionUUID, uuid)
+						}
+						onReorderQuestion={(sectionUUID, questionUUID, direction) =>
+							reorderQuestion(sectionUUID, questionUUID, direction, uuid)
+						}
+						onDuplicateQuestion={(sectionUUID, questionUUID) =>
+							duplicateQuestion(sectionUUID, questionUUID, uuid)
+						}
+						onMoveQuestion={(questionUUID, toSectionUUID) =>
+							moveQuestion(questionUUID, toSectionUUID, uuid)
 						}
 					/>
 				))}
@@ -1091,6 +1307,26 @@ export default function QuestionnaireBuilder() {
 			<aside className="hidden w-72 shrink-0 lg:block">
 				<ScoringSummary questionnaire={questionnaire} />
 			</aside>
+
+			{/* Preview as candidate */}
+			<Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+				<DialogContent className="sm:max-w-3xl">
+					<DialogHeader>
+						<DialogTitle>Preview as candidate</DialogTitle>
+						<DialogDescription>
+							Answer this template the way a candidate would. Nothing is saved.
+						</DialogDescription>
+					</DialogHeader>
+					<div className="flex min-h-0 flex-col">
+						<div className="max-h-[min(70vh,40rem)] min-h-0 flex-1 overflow-y-auto">
+							<QuestionnaireSimulator questionnaireUUID={uuid} />
+						</div>
+					</div>
+					<DialogFooter>
+						<DialogClose render={<Button variant="outline">Close</Button>} />
+					</DialogFooter>
+				</DialogContent>
+			</Dialog>
 		</div>
 	);
 }

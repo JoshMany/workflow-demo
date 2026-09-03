@@ -18,6 +18,7 @@ import { getLayoutedNodes } from "@/components/workflow/elk-layout";
 import { useDemoStore } from "@/providers/workflow-store-provider";
 import EditEmailNode from "./forms/edit-email-node";
 import EditNotificationNode from "./forms/edit-notification-node";
+import EditQuestionnaireNode from "./forms/edit-questionnaire-node";
 
 function WorkflowChart() {
 	const {
@@ -211,6 +212,7 @@ function WorkflowChart() {
 
 			<EditEmailNode />
 			<EditNotificationNode />
+			<EditQuestionnaireNode />
 		</div>
 	);
 }

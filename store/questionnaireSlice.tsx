@@ -146,6 +146,24 @@ export interface QuestionnaireStoreActions {
 	) => void;
 	removeQuestion: (questionUUID: string, questionnaireUUID?: string) => void;
 
+	//* Question organization (reorder / move / duplicate)
+	duplicateQuestion: (
+		sectionUUID: string,
+		questionUUID: string,
+		questionnaireUUID?: string,
+	) => void;
+	moveQuestion: (
+		questionUUID: string,
+		toSectionUUID: string,
+		questionnaireUUID?: string,
+	) => void;
+	reorderQuestion: (
+		sectionUUID: string,
+		questionUUID: string,
+		direction: "up" | "down",
+		questionnaireUUID?: string,
+	) => void;
+
 	//* Conditional branches
 	setQuestionBranches: (
 		questionUUID: string,
@@ -399,6 +417,94 @@ export const initialQuestionnaireList: Record<string, QuestionnaireItemType> = {
 		],
 	},
 };
+
+//* Deep clone de una pregunta con nuevos ids (questionUUID, options y branches).
+function cloneQuestion(question: QuestionItemType): QuestionItemType {
+	const copy = JSON.parse(JSON.stringify(question)) as QuestionItemType;
+	copy.questionUUID = uuidv4();
+	copy.branches = copy.branches.map((branch) => ({
+		...branch,
+		branchUUID: uuidv4(),
+	}));
+
+	if (
+		copy.questionType === "single_choice" ||
+		copy.questionType === "multiple_choice"
+	) {
+		const config = copy.config as { options: ChoiceOptionType[] };
+		config.options = config.options.map((option) => ({
+			...option,
+			optionUUID: uuidv4(),
+		}));
+	}
+	return copy;
+}
+
+//* Reordena una pregunta dentro de su sección (arriba/abajo).
+function reorderQuestionInSection(
+	questionnaire: QuestionnaireItemType,
+	sectionUUID: string,
+	questionUUID: string,
+	direction: "up" | "down",
+): QuestionnaireItemType {
+	return {
+		...questionnaire,
+		Sections: questionnaire.Sections.map((section) => {
+			if (section.sectionUUID !== sectionUUID) return section;
+
+			const index = section.Questions.findIndex(
+				(question) => question.questionUUID === questionUUID,
+			);
+			if (index < 0) return section;
+
+			const to = direction === "up" ? index - 1 : index + 1;
+			if (to < 0 || to >= section.Questions.length) return section;
+
+			const Questions = [...section.Questions];
+			const [moved] = Questions.splice(index, 1);
+			Questions.splice(to, 0, moved);
+			return { ...section, Questions };
+		}),
+	};
+}
+
+//* Mueve una pregunta a otra sección (la añade al final de la sección destino).
+function moveQuestionBetweenSections(
+	questionnaire: QuestionnaireItemType,
+	questionUUID: string,
+	toSectionUUID: string,
+): QuestionnaireItemType {
+	const source = questionnaire.Sections.find((section) =>
+		section.Questions.some(
+			(question) => question.questionUUID === questionUUID,
+		),
+	);
+	if (!source) return questionnaire;
+	if (source.sectionUUID === toSectionUUID) return questionnaire;
+
+	const question = source.Questions.find(
+		(q) => q.questionUUID === questionUUID,
+	);
+	if (!question) return questionnaire;
+
+	return {
+		...questionnaire,
+		Sections: questionnaire.Sections.map((section) => {
+			if (section.sectionUUID === source.sectionUUID) {
+				return {
+					...section,
+					Questions: section.Questions.filter(
+						(q) => q.questionUUID !== questionUUID,
+					),
+				};
+			}
+			if (section.sectionUUID === toSectionUUID) {
+				return { ...section, Questions: [...section.Questions, question] };
+			}
+			return section;
+		}),
+	};
+}
 
 export const createQuestionnaireSlice: StateCreator<
 	DemoStore,
@@ -654,6 +760,86 @@ export const createQuestionnaireSlice: StateCreator<
 							};
 						}),
 					}),
+				),
+			};
+		}),
+
+	duplicateQuestion: (sectionUUID, questionUUID, questionnaireUUID) =>
+		set((state) => {
+			const uuid = questionnaireUUID ?? state.CurrentQuestionnaireUUID;
+			if (!state.Questionnaires[uuid]) return state;
+
+			return {
+				Questionnaires: updateQuestionnaireIn(
+					state.Questionnaires,
+					uuid,
+					(questionnaire) => {
+						const section = questionnaire.Sections.find(
+							(section) => section.sectionUUID === sectionUUID,
+						);
+						if (!section) return questionnaire;
+
+						const index = section.Questions.findIndex(
+							(question) => question.questionUUID === questionUUID,
+						);
+						if (index < 0) return questionnaire;
+
+						const copy = cloneQuestion(section.Questions[index]);
+						return {
+							...questionnaire,
+							Sections: questionnaire.Sections.map((current) =>
+								current.sectionUUID !== sectionUUID
+									? current
+									: {
+											...current,
+											Questions: [
+												...current.Questions.slice(0, index + 1),
+												copy,
+												...current.Questions.slice(index + 1),
+											],
+										},
+							),
+						};
+					},
+				),
+			};
+		}),
+
+	reorderQuestion: (sectionUUID, questionUUID, direction, questionnaireUUID) =>
+		set((state) => {
+			const uuid = questionnaireUUID ?? state.CurrentQuestionnaireUUID;
+			if (!state.Questionnaires[uuid]) return state;
+
+			return {
+				Questionnaires: updateQuestionnaireIn(
+					state.Questionnaires,
+					uuid,
+					(questionnaire) =>
+						reorderQuestionInSection(
+							questionnaire,
+							sectionUUID,
+							questionUUID,
+							direction,
+						),
+				),
+			};
+		}),
+
+	moveQuestion: (questionUUID, toSectionUUID, questionnaireUUID) =>
+		set((state) => {
+			const uuid = questionnaireUUID ?? state.CurrentQuestionnaireUUID;
+			if (!state.Questionnaires[uuid]) return state;
+
+			return {
+				Questionnaires: updateQuestionnaireIn(
+					state.Questionnaires,
+					uuid,
+					(questionnaire) =>
+						moveQuestionBetweenSections(
+							questionnaire,
+							questionUUID,
+							toSectionUUID,
+						),
 				),
 			};
 		}),
