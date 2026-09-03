@@ -2,11 +2,18 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { FlowSlice } from "./flowSlice";
 import { createFlowSlice } from "./flowSlice";
+import type { QuestionnaireSlice } from "./questionnaireSlice";
+import {
+	createQuestionnaireSlice,
+	initialQuestionnaireList,
+	initialQuestionnaireUUID,
+} from "./questionnaireSlice";
 import type { WorkflowSlice } from "./workflowSlice";
 import { createWorkflowSlice } from "./workflowSlice";
 
 export type DemoStore = WorkflowSlice &
-	FlowSlice & {
+	FlowSlice &
+	QuestionnaireSlice & {
 		getAll: () => void;
 
 		// Node Menu State
@@ -26,6 +33,7 @@ export const createDemoStore = create<DemoStore>()(
 		(set, get, store) => ({
 			...createWorkflowSlice(set, get, store),
 			...createFlowSlice(set, get, store),
+			...createQuestionnaireSlice(set, get, store),
 
 			// Main store only
 			getAll: () => get(),
@@ -51,11 +59,25 @@ export const createDemoStore = create<DemoStore>()(
 		}),
 		{
 			name: "workflow-storage",
-			version: 1.4,
+			version: 1.5,
 			partialize: (state) => ({
 				Workflows: state.Workflows,
 				CurrentWorkflowUUID: state.CurrentWorkflowUUID,
+				Questionnaires: state.Questionnaires,
+				CurrentQuestionnaireUUID: state.CurrentQuestionnaireUUID,
 			}),
+			migrate: (persistedState, version) => {
+				if (version < 1.5) {
+					const previous = persistedState as Partial<DemoStore>;
+					return {
+						...previous,
+						Questionnaires: previous.Questionnaires ?? initialQuestionnaireList,
+						CurrentQuestionnaireUUID:
+							previous.CurrentQuestionnaireUUID ?? initialQuestionnaireUUID,
+					} as DemoStore;
+				}
+				return persistedState as DemoStore;
+			},
 		},
 	),
 );
