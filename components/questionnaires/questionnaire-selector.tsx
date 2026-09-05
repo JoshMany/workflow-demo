@@ -137,19 +137,22 @@ export default function QuestionnaireSelector() {
 		: entries;
 
 	return (
-		<div className="h-full w-fit min-w-3xs max-w-sm">
-			<Button
-				variant="default"
-				size="lg"
-				className="w-full"
-				onClick={createQuestionnaire}
-			>
-				<Plus data-icon="inline-start" /> New template
-			</Button>
-			<Separator className="my-3" />
+		<div className="h-full w-fit">
+			<div className="p-2">
+				<Button
+					variant="default"
+					size="lg"
+					className="w-full"
+					onClick={createQuestionnaire}
+				>
+					<Plus data-icon="inline-start" /> New template
+				</Button>
+			</div>
+
+			<Separator orientation="horizontal" />
 
 			{/* Search */}
-			<div className="relative mb-1.5">
+			<div className="relative m-2">
 				<SearchIcon className="pointer-events-none absolute top-1/2 left-2 size-3.5 -translate-y-1/2 text-muted-foreground" />
 				<Input
 					value={query}
@@ -170,14 +173,14 @@ export default function QuestionnaireSelector() {
 				)}
 			</div>
 
-			<p className="mb-1.5 text-xs text-muted-foreground" aria-live="polite">
+			<p className="m-2 text-xs text-muted-foreground" aria-live="polite">
 				{filtered.length} of {entries.length} template
 				{entries.length === 1 ? "" : "s"}
 			</p>
 
 			<ButtonGroup
 				orientation="vertical"
-				className="h-fit w-full"
+				className="h-fit w-full p-2"
 				aria-label="Questionnaire templates"
 			>
 				{filtered.map(([uuid, questionnaire]) => {
@@ -217,6 +220,7 @@ export default function QuestionnaireSelector() {
 											variant={isActive ? "outline" : "ghost"}
 											size="icon-lg"
 											aria-label="Template options"
+											className={"h-auto"}
 										>
 											<Ellipsis />
 										</Button>

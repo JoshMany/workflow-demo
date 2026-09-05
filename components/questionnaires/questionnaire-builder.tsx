@@ -91,7 +91,7 @@ function Panel({
 }) {
 	return (
 		<section
-			className={`rounded-lg border border-input/60 bg-card/40 p-3 ${className}`}
+			className={`flex flex-col gap-3 rounded-xl border border-input/40 bg-card/40 p-4 ${className}`}
 		>
 			{children}
 		</section>
@@ -276,8 +276,8 @@ function QuestionEditor({
 	return (
 		<Panel className="gap-3">
 			{/* Header: index, type, required, points and delete */}
-			<div className="flex flex-wrap items-center gap-2">
-				<span className="text-xs font-semibold text-muted-foreground">
+			<div className="flex flex-wrap items-center gap-2.5">
+				<span className="flex h-6 min-w-6 items-center justify-center rounded-md bg-muted/70 px-1.5 text-[0.7rem] font-semibold text-muted-foreground">
 					Q{questionIndex}
 				</span>
 				<Select
@@ -336,7 +336,7 @@ function QuestionEditor({
 				value={question.prompt}
 				placeholder="Type the question…"
 				onChange={(e) => onBase({ prompt: e.target.value })}
-				className="h-8 text-sm font-medium"
+				className="h-9 text-base font-medium"
 			/>
 
 			{/* Optional description */}
@@ -345,39 +345,67 @@ function QuestionEditor({
 				placeholder="Optional description / help text"
 				rows={2}
 				onChange={(e) => onBase({ description: e.target.value })}
+				className="min-h-9 border-transparent bg-transparent px-0 text-xs text-muted-foreground shadow-none focus-visible:ring-0"
 			/>
 
-			{/* Order / duplicate / move */}
-			<div className="flex flex-wrap items-center gap-1.5 border-t border-input/50 pt-2">
-				<span className="text-[0.65rem] font-medium text-muted-foreground">
-					Order
-				</span>
-				<Button
-					variant="ghost"
-					size="icon-sm"
-					disabled={!canMoveUp}
-					onClick={onMoveUp}
-					aria-label="Move question up"
+			{renderConfig()}
+
+			{/* Conditional logic (branches) */}
+			<div className="flex flex-col gap-2">
+				<button
+					type="button"
+					onClick={() => setLogicOpen((open) => !open)}
+					aria-expanded={logicOpen}
+					className="flex w-fit items-center gap-1.5 rounded-md text-xs font-medium text-muted-foreground outline-none transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/30"
 				>
-					<ArrowUpIcon />
-				</Button>
-				<Button
-					variant="ghost"
-					size="icon-sm"
-					disabled={!canMoveDown}
-					onClick={onMoveDown}
-					aria-label="Move question down"
-				>
-					<ArrowDownIcon />
-				</Button>
-				<Button
-					variant="ghost"
-					size="icon-sm"
-					onClick={onDuplicate}
-					aria-label="Duplicate question"
-				>
-					<Copy />
-				</Button>
+					{logicOpen ? <ChevronDownIcon /> : <ChevronRightIcon />}
+					<GitBranchIcon />
+					Conditional logic
+					{question.branches.length > 0 && (
+						<span className="rounded-full bg-muted px-1.5 py-0.5 text-[0.65rem]">
+							{question.branches.length}
+						</span>
+					)}
+				</button>
+				{logicOpen && (
+					<BranchesEditor
+						question={question}
+						allQuestions={allQuestions}
+						onBranchesChange={onBranchesChange}
+					/>
+				)}
+			</div>
+
+			{/* Footer tools: order, duplicate, move */}
+			<footer className="mt-1 flex flex-wrap items-center gap-2 border-t border-border/60 pt-3">
+				<div className="flex items-center gap-1">
+					<Button
+						variant="ghost"
+						size="icon-sm"
+						disabled={!canMoveUp}
+						onClick={onMoveUp}
+						aria-label="Move question up"
+					>
+						<ArrowUpIcon />
+					</Button>
+					<Button
+						variant="ghost"
+						size="icon-sm"
+						disabled={!canMoveDown}
+						onClick={onMoveDown}
+						aria-label="Move question down"
+					>
+						<ArrowDownIcon />
+					</Button>
+					<Button
+						variant="ghost"
+						size="icon-sm"
+						onClick={onDuplicate}
+						aria-label="Duplicate question"
+					>
+						<Copy />
+					</Button>
+				</div>
 				{moveSections.length > 0 && (
 					<Select
 						value={moveTo}
@@ -403,35 +431,10 @@ function QuestionEditor({
 						</SelectContent>
 					</Select>
 				)}
-			</div>
-
-			{renderConfig()}
-
-			{/* Conditional logic (branches) */}
-			<div className="flex flex-col gap-2 border-t border-input/60 pt-2">
-				<button
-					type="button"
-					onClick={() => setLogicOpen((open) => !open)}
-					aria-expanded={logicOpen}
-					className="flex w-fit items-center gap-1.5 rounded-md text-xs font-medium text-muted-foreground outline-none transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/30"
-				>
-					{logicOpen ? <ChevronDownIcon /> : <ChevronRightIcon />}
-					<GitBranchIcon />
-					Conditional logic
-					{question.branches.length > 0 && (
-						<span className="rounded-full bg-muted px-1.5 py-0.5 text-[0.65rem]">
-							{question.branches.length}
-						</span>
-					)}
-				</button>
-				{logicOpen && (
-					<BranchesEditor
-						question={question}
-						allQuestions={allQuestions}
-						onBranchesChange={onBranchesChange}
-					/>
-				)}
-			</div>
+				<span className="ml-auto text-[0.65rem] text-muted-foreground">
+					Order &amp; move
+				</span>
+			</footer>
 		</Panel>
 	);
 }
@@ -484,12 +487,20 @@ function OptionsEditor({
 	};
 
 	return (
-		<div className="grid gap-1.5">
-			<Label className="text-xs text-muted-foreground">
-				Options (each one can award points, i.e. “inciso” score)
-			</Label>
+		<div className="flex flex-col gap-2">
+			<div className="flex items-center justify-between">
+				<Label className="text-[0.65rem] font-semibold uppercase tracking-wide text-muted-foreground">
+					Options
+				</Label>
+				<span className="text-[0.65rem] text-muted-foreground">
+					Inciso score = points per option
+				</span>
+			</div>
 			{options.map((option, index) => (
-				<div key={option.optionUUID} className="flex items-center gap-1.5">
+				<div
+					key={option.optionUUID}
+					className="flex items-center gap-2 rounded-lg bg-muted/30 px-2.5 py-1.5"
+				>
 					<span className="w-5 text-center text-xs text-muted-foreground">
 						{index + 1}
 					</span>
@@ -546,7 +557,12 @@ function OptionsEditor({
 				</div>
 			))}
 			<div>
-				<Button variant="outline" size="sm" onClick={addOption}>
+				<Button
+					variant="ghost"
+					size="sm"
+					onClick={addOption}
+					className="text-muted-foreground hover:text-foreground"
+				>
 					<Plus data-icon="inline-start" /> Add option
 				</Button>
 			</div>
@@ -695,7 +711,7 @@ function BranchesEditor({
 		);
 
 	return (
-		<div className="flex flex-col gap-2 rounded-md border border-dashed border-input/60 bg-muted/30 p-2">
+		<div className="flex flex-col gap-2 border-l-2 border-primary/15 pl-3">
 			{branches.length === 0 && (
 				<p className="text-xs text-muted-foreground">
 					No rules yet. Add one to make the flow conditional on the answer.
@@ -715,12 +731,12 @@ function BranchesEditor({
 				return (
 					<div
 						key={branch.branchUUID}
-						className="flex flex-col gap-1.5 rounded-md border border-input/60 p-2"
+						className="flex flex-col gap-2 rounded-lg bg-muted/30 px-3 py-2"
 					>
 						{/* Condition */}
 						<div className="flex flex-wrap items-center gap-1.5">
-							<span className="text-xs font-medium text-muted-foreground">
-								IF answer
+							<span className="min-w-16 text-[0.65rem] font-semibold uppercase tracking-wide text-muted-foreground">
+								If answer
 							</span>
 							<Select
 								value={branch.operator}
@@ -760,8 +776,8 @@ function BranchesEditor({
 
 						{/* Action */}
 						<div className="flex flex-wrap items-center gap-1.5">
-							<span className="text-xs font-medium text-muted-foreground">
-								THEN
+							<span className="min-w-16 text-[0.65rem] font-semibold uppercase tracking-wide text-muted-foreground">
+								Then
 							</span>
 							<Select
 								value={branch.action.type}
@@ -840,7 +856,7 @@ function BranchesEditor({
 				);
 			})}
 
-			<Button variant="outline" size="sm" onClick={addBranch}>
+			<Button variant="ghost" size="sm" onClick={addBranch}>
 				<Plus data-icon="inline-start" /> Add rule
 			</Button>
 		</div>
@@ -886,20 +902,20 @@ function SectionEditor({
 	);
 
 	return (
-		<Panel className="flex flex-col gap-3">
-			<div className="flex items-center gap-2">
-				<span className="text-xs font-semibold text-muted-foreground">
-					S{sectionIndex}
+		<section className="flex flex-col gap-4">
+			<div className="flex items-center justify-between gap-2">
+				<span className="text-[0.65rem] font-semibold uppercase tracking-widest text-primary/80">
+					Section {sectionIndex}
+					{section.Questions.length > 0 && (
+						<span className="ml-1.5 font-normal normal-case text-muted-foreground">
+							· {section.Questions.length} question
+							{section.Questions.length === 1 ? "" : "s"}
+						</span>
+					)}
 				</span>
-				<Input
-					value={section.title ?? ""}
-					placeholder="Section title"
-					className="h-7 font-medium"
-					onChange={(e) => onUpdateSection({ title: e.target.value })}
-				/>
 				<Button
 					variant="ghost"
-					size="icon"
+					size="icon-sm"
 					onClick={onRemoveSection}
 					aria-label="Delete section"
 					className="text-destructive hover:text-destructive"
@@ -908,12 +924,23 @@ function SectionEditor({
 				</Button>
 			</div>
 
-			<Textarea
-				value={section.description ?? ""}
-				placeholder="Optional section description"
-				rows={2}
-				onChange={(e) => onUpdateSection({ description: e.target.value })}
-			/>
+			<div className="-mt-1 grid gap-1">
+				<Input
+					value={section.title ?? ""}
+					placeholder="Untitled section"
+					className="h-9 border-transparent bg-transparent px-0 text-xl font-semibold shadow-none focus-visible:ring-0"
+					onChange={(e) => onUpdateSection({ title: e.target.value })}
+				/>
+				<Textarea
+					value={section.description ?? ""}
+					placeholder="Add an optional section description…"
+					rows={1}
+					onChange={(e) => onUpdateSection({ description: e.target.value })}
+					className="min-h-8 resize-none border-transparent bg-transparent px-0 text-xs text-muted-foreground shadow-none focus-visible:ring-0"
+				/>
+			</div>
+
+			<Separator className="my-1 bg-border/70" />
 
 			{section.Questions.map((question, index) => {
 				const isFirst = index === 0;
@@ -980,7 +1007,7 @@ function SectionEditor({
 					<Plus data-icon="inline-start" /> Add question
 				</Button>
 			</div>
-		</Panel>
+		</section>
 	);
 }
 
@@ -1201,7 +1228,7 @@ export default function QuestionnaireBuilder() {
 	return (
 		<div className="flex min-h-0 flex-1 gap-4">
 			{/* Left: editable form */}
-			<div className="flex min-w-0 flex-1 flex-col gap-3 overflow-y-auto pr-1">
+			<div className="flex min-w-0 flex-1 flex-col gap-6 overflow-y-auto pr-1">
 				<Panel className="flex flex-col gap-3">
 					<div className="flex items-center justify-between">
 						<h3 className="text-sm font-semibold">Template details</h3>

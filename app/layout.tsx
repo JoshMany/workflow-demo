@@ -4,6 +4,7 @@ import "./globals.css";
 import AppHeader from "@/components/app-header";
 import { AppSidebar } from "@/components/app-sidebar";
 import { ThemeProvider } from "@/components/theme-provider";
+import { Separator } from "@/components/ui/separator";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { Toaster } from "@/components/ui/toast";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -44,6 +45,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
 								<AppSidebar />
 								<SidebarInset>
 									<AppHeader />
+									<Separator orientation="horizontal" />
 									<main className="flex flex-1 flex-col">{children}</main>
 								</SidebarInset>
 							</DemoStoreProvider>

@@ -18,14 +18,14 @@ export default function QuestionnairesPage() {
 	);
 
 	return (
-		<div className="flex flex-1 flex-row gap-3 overflow-hidden p-3">
+		<div className="flex flex-1 flex-row overflow-hidden">
 			{/* Templates system */}
 			<QuestionnaireSelector />
 
 			<Separator orientation="vertical" />
 
 			{/* Studio: builder / simulator */}
-			<div className="flex min-w-0 flex-1 flex-col">
+			<div className="flex min-w-0 flex-1 flex-col m-2">
 				<div className="mb-3 flex items-center justify-between">
 					<h2 className="text-sm font-semibold">Template studio</h2>
 					<div
