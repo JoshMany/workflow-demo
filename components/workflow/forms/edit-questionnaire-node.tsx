@@ -31,13 +31,72 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { toast } from "@/components/ui/toast";
+import { QUESTION_TYPE_LABELS } from "@/lib/questionnaire-meta";
 import { computeQuestionnaireScore } from "@/lib/questionnaire-scoring";
 import { useDemoStore } from "@/providers/workflow-store-provider";
+import type { QuestionnaireItemType } from "@/store/questionnaireSlice";
 
 const formSchema = z.object({
 	title: z.string().min(1, "Title is required."),
 	questionnaireUUID: z.string().min(1, "Select a questionnaire template."),
 });
+
+//* Preview de solo lectura del cuestionario seleccionado.
+function QuestionnairePreview({
+	questionnaire,
+}: {
+	questionnaire: QuestionnaireItemType;
+}) {
+	const stats = computeQuestionnaireScore(questionnaire, {});
+
+	return (
+		<div className="flex flex-col gap-2 rounded-lg border border-input/40 bg-muted/20 p-3">
+			<div className="flex items-center justify-between gap-2">
+				<p className="truncate text-sm font-semibold">{questionnaire.name}</p>
+				<span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[0.65rem] text-muted-foreground">
+					{stats.totalQuestions} q · {stats.maxScore} pt
+					{stats.maxScore === 1 ? "" : "s"}
+				</span>
+			</div>
+
+			<div className="max-h-64 space-y-3 overflow-y-auto pr-1">
+				{questionnaire.Sections.length === 0 && (
+					<p className="text-xs text-muted-foreground">No sections yet.</p>
+				)}
+				{questionnaire.Sections.map((section, index) => (
+					<div key={section.sectionUUID} className="flex flex-col gap-1">
+						<p className="text-[0.65rem] font-semibold uppercase tracking-wide text-muted-foreground">
+							{section.title || `Section ${index + 1}`}
+						</p>
+						{section.Questions.map((question) => (
+							<div
+								key={question.questionUUID}
+								className="flex items-center gap-2 rounded-md bg-background/60 px-2 py-1.5"
+							>
+								<span className="shrink-0 rounded bg-muted/70 px-1.5 py-0.5 text-[0.6rem] font-medium text-muted-foreground">
+									{QUESTION_TYPE_LABELS[question.questionType]}
+								</span>
+								<span className="min-w-0 flex-1 truncate text-xs">
+									{question.prompt || "Untitled question"}
+								</span>
+								{question.required && (
+									<span className="text-destructive">
+										*<span className="sr-only">Required</span>
+									</span>
+								)}
+								{question.score > 0 && (
+									<span className="shrink-0 text-[0.6rem] text-muted-foreground">
+										{question.score} pts
+									</span>
+								)}
+							</div>
+						))}
+					</div>
+				))}
+			</div>
+		</div>
+	);
+}
 
 export default function EditQuestionnaireNode() {
 	const router = useRouter();
@@ -122,7 +181,7 @@ export default function EditQuestionnaireNode() {
 
 	return (
 		<Dialog open={DialogState && isQuestionnaire} onOpenChange={toggleModal}>
-			<DialogContent className="sm:max-w-md">
+			<DialogContent className="sm:max-w-xl">
 				<DialogHeader>
 					<DialogTitle>Edit Questionnaire</DialogTitle>
 					<DialogDescription>
@@ -244,6 +303,10 @@ export default function EditQuestionnaireNode() {
 							}}
 						</form.Field>
 					</FieldGroup>
+
+					{selectedTemplate && (
+						<QuestionnairePreview questionnaire={selectedTemplate} />
+					)}
 
 					<DialogFooter>
 						<DialogClose render={<Button variant="outline">Cancel</Button>} />

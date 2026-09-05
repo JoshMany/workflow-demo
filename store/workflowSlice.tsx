@@ -10,6 +10,9 @@ export type WorkflowItemType = {
 	Edges: TransitionEdgeType[];
 	config?: {
 		is_default?: boolean;
+		/** True cuando ya se aplicó el autolayout ELK a este workflow. Evita que el
+		 * layout automático de montaje pise posiciones/orden guardados manualmente. */
+		autoLayoutApplied?: boolean;
 	};
 };
 
@@ -22,6 +25,7 @@ export interface WorkflowStoreActions {
 	createWorkflow: () => void;
 	selectWorkflow: (uuid: string) => void;
 	renameWorkflow: (uuid: string, name: string) => void;
+	setWorkflowAutoLayout: (applied: boolean) => void;
 }
 
 export type WorkflowSlice = WorkflowStoreStates & WorkflowStoreActions;
@@ -79,6 +83,29 @@ export const createWorkflowSlice: StateCreator<
 				Workflows: {
 					...state.Workflows,
 					[uuid]: { ...workflow, name: newName.trim() },
+				},
+			};
+		});
+	},
+	setWorkflowAutoLayout: (applied) => {
+		set((state) => {
+			const uuid = state.CurrentWorkflowUUID;
+			const workflow = state.Workflows[uuid];
+
+			if (!workflow) {
+				throw new Error(`Workflow "${uuid}" was not found.`);
+			}
+
+			return {
+				Workflows: {
+					...state.Workflows,
+					[uuid]: {
+						...workflow,
+						config: {
+							...workflow.config,
+							autoLayoutApplied: applied,
+						},
+					},
 				},
 			};
 		});

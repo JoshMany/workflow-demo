@@ -332,21 +332,39 @@ function QuestionEditor({
 			</div>
 
 			{/* Prompt */}
-			<Input
-				value={question.prompt}
-				placeholder="Type the question…"
-				onChange={(e) => onBase({ prompt: e.target.value })}
-				className="h-9 text-base font-medium"
-			/>
+			<div className="grid gap-1.5">
+				<Label
+					htmlFor={`question-prompt-${question.questionUUID}`}
+					className="text-[0.65rem] font-semibold uppercase tracking-wide text-muted-foreground"
+				>
+					Question
+				</Label>
+				<Input
+					id={`question-prompt-${question.questionUUID}`}
+					value={question.prompt}
+					placeholder="Type the question…"
+					onChange={(e) => onBase({ prompt: e.target.value })}
+					className="h-9 text-base font-medium"
+				/>
+			</div>
 
 			{/* Optional description */}
-			<Textarea
-				value={question.description ?? ""}
-				placeholder="Optional description / help text"
-				rows={2}
-				onChange={(e) => onBase({ description: e.target.value })}
-				className="min-h-9 border-transparent bg-transparent px-0 text-xs text-muted-foreground shadow-none focus-visible:ring-0"
-			/>
+			<div className="grid gap-1.5">
+				<Label
+					htmlFor={`question-desc-${question.questionUUID}`}
+					className="text-[0.65rem] font-semibold uppercase tracking-wide text-muted-foreground"
+				>
+					Description
+				</Label>
+				<Textarea
+					id={`question-desc-${question.questionUUID}`}
+					value={question.description ?? ""}
+					placeholder="Optional description / help text"
+					rows={2}
+					onChange={(e) => onBase({ description: e.target.value })}
+					className="min-h-9 border-transparent bg-transparent px-0 text-xs text-muted-foreground shadow-none focus-visible:ring-0"
+				/>
+			</div>
 
 			{renderConfig()}
 
@@ -902,7 +920,7 @@ function SectionEditor({
 	);
 
 	return (
-		<section className="flex flex-col gap-4">
+		<Panel>
 			<div className="flex items-center justify-between gap-2">
 				<span className="text-[0.65rem] font-semibold uppercase tracking-widest text-primary/80">
 					Section {sectionIndex}
@@ -924,23 +942,39 @@ function SectionEditor({
 				</Button>
 			</div>
 
-			<div className="-mt-1 grid gap-1">
-				<Input
-					value={section.title ?? ""}
-					placeholder="Untitled section"
-					className="h-9 border-transparent bg-transparent px-0 text-xl font-semibold shadow-none focus-visible:ring-0"
-					onChange={(e) => onUpdateSection({ title: e.target.value })}
-				/>
-				<Textarea
-					value={section.description ?? ""}
-					placeholder="Add an optional section description…"
-					rows={1}
-					onChange={(e) => onUpdateSection({ description: e.target.value })}
-					className="min-h-8 resize-none border-transparent bg-transparent px-0 text-xs text-muted-foreground shadow-none focus-visible:ring-0"
-				/>
+			<div className="-mt-1 grid gap-2">
+				<div className="grid gap-1">
+					<Label
+						htmlFor={`section-title-${section.sectionUUID}`}
+						className="text-[0.65rem] font-semibold uppercase tracking-wide text-muted-foreground"
+					>
+						Section title
+					</Label>
+					<Input
+						id={`section-title-${section.sectionUUID}`}
+						value={section.title ?? ""}
+						placeholder="e.g. Candidate Profile"
+						className="h-9 border-transparent bg-transparent px-0 text-xl font-semibold shadow-none focus-visible:ring-0"
+						onChange={(e) => onUpdateSection({ title: e.target.value })}
+					/>
+				</div>
+				<div className="grid gap-1">
+					<Label
+						htmlFor={`section-desc-${section.sectionUUID}`}
+						className="text-[0.65rem] font-semibold uppercase tracking-wide text-muted-foreground"
+					>
+						Section description
+					</Label>
+					<Textarea
+						id={`section-desc-${section.sectionUUID}`}
+						value={section.description ?? ""}
+						placeholder="What is this section about?"
+						rows={1}
+						onChange={(e) => onUpdateSection({ description: e.target.value })}
+						className="min-h-8 resize-none border-transparent bg-transparent px-0 text-xs text-muted-foreground shadow-none focus-visible:ring-0"
+					/>
+				</div>
 			</div>
-
-			<Separator className="my-1 bg-border/70" />
 
 			{section.Questions.map((question, index) => {
 				const isFirst = index === 0;
@@ -1007,7 +1041,7 @@ function SectionEditor({
 					<Plus data-icon="inline-start" /> Add question
 				</Button>
 			</div>
-		</section>
+		</Panel>
 	);
 }
 
@@ -1226,9 +1260,9 @@ export default function QuestionnaireBuilder() {
 	);
 
 	return (
-		<div className="flex min-h-0 flex-1 gap-4">
+		<div className="flex min-h-0 flex-1 gap-3">
 			{/* Left: editable form */}
-			<div className="flex min-w-0 flex-1 flex-col gap-6 overflow-y-auto pr-1">
+			<div className="flex min-w-0 flex-1 flex-col gap-4 overflow-y-auto">
 				<Panel className="flex flex-col gap-3">
 					<div className="flex items-center justify-between">
 						<h3 className="text-sm font-semibold">Template details</h3>
@@ -1268,23 +1302,24 @@ export default function QuestionnaireBuilder() {
 							}
 						/>
 					</div>
+					<ScoringSettingsEditor
+						questionnaire={questionnaire}
+						onChange={(patch) =>
+							updateQuestionnaire(uuid, {
+								scoring: {
+									enabled:
+										patch.enabled ?? questionnaire.scoring?.enabled ?? false,
+									passThreshold:
+										patch.passThreshold ??
+										questionnaire.scoring?.passThreshold ??
+										60,
+								},
+							})
+						}
+					/>
 				</Panel>
 
-				<ScoringSettingsEditor
-					questionnaire={questionnaire}
-					onChange={(patch) =>
-						updateQuestionnaire(uuid, {
-							scoring: {
-								enabled:
-									patch.enabled ?? questionnaire.scoring?.enabled ?? false,
-								passThreshold:
-									patch.passThreshold ??
-									questionnaire.scoring?.passThreshold ??
-									60,
-							},
-						})
-					}
-				/>
+				<Separator orientation="horizontal" />
 
 				{questionnaire.Sections.map((section, index) => (
 					<SectionEditor

@@ -10,15 +10,59 @@ import {
 	useNodesInitialized,
 	useReactFlow,
 } from "@xyflow/react";
+import {
+	Bell,
+	ChevronsLeftRightEllipsis,
+	ClipboardCheck,
+	ClipboardList,
+	Mail,
+	MessageSquareText,
+	Plus,
+} from "lucide-react";
 import { useTheme } from "next-themes";
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+	type ReactNode,
+	useCallback,
+	useEffect,
+	useRef,
+	useState,
+} from "react";
 import { useShallow } from "zustand/react/shallow";
 import { Button } from "@/components/ui/button";
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuGroup,
+	DropdownMenuItem,
+	DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { getLayoutedNodes } from "@/components/workflow/elk-layout";
 import { useDemoStore } from "@/providers/workflow-store-provider";
+import type {
+	ActionNodeType,
+	ActionType,
+	TransitionEdgeType,
+} from "@/store/flowSlice";
 import EditEmailNode from "./forms/edit-email-node";
 import EditNotificationNode from "./forms/edit-notification-node";
 import EditQuestionnaireNode from "./forms/edit-questionnaire-node";
+
+const ADD_ACTION_OPTIONS: {
+	type: ActionType;
+	label: string;
+	icon: ReactNode;
+}[] = [
+	{ type: "email", label: "Email", icon: <Mail /> },
+	{ type: "internal_notification", label: "Notification", icon: <Bell /> },
+	{ type: "questionnaire", label: "Questionnaire", icon: <ClipboardList /> },
+	{ type: "interview", label: "Interview", icon: <MessageSquareText /> },
+	{ type: "manual_task", label: "Manual task", icon: <ClipboardCheck /> },
+	{
+		type: "condition",
+		label: "Condition",
+		icon: <ChevronsLeftRightEllipsis />,
+	},
+];
 
 function WorkflowChart() {
 	const {
@@ -30,9 +74,11 @@ function WorkflowChart() {
 		nodeTypes,
 		edgeTypes,
 		setNodes,
+		addNode,
 		onNodesDelete,
 		setNodeDialogId,
 		toggleNodeDialog,
+		setWorkflowAutoLayout,
 	} = useDemoStore(
 		useShallow((state) => ({
 			Workflows: state.Workflows,
@@ -46,6 +92,8 @@ function WorkflowChart() {
 			onNodesDelete: state.onNodesDelete,
 			setNodeDialogId: state.setNodeDialogId,
 			toggleNodeDialog: state.toggleNodeDialog,
+			addNode: state.addNode,
+			setWorkflowAutoLayout: state.setWorkflowAutoLayout,
 		})),
 	);
 
@@ -53,6 +101,29 @@ function WorkflowChart() {
 
 	const Nodes = currentWorkflow?.Nodes ?? [];
 	const Edges = currentWorkflow?.Edges ?? [];
+
+	// Refs con el grafo más reciente: permiten autolayout justo tras añadir un nodo
+	// (el estado/ref ya se habrá actualizado cuando corra requestAnimationFrame).
+	const nodesRef = useRef<ActionNodeType[]>(Nodes);
+	const edgesRef = useRef<TransitionEdgeType[]>(Edges);
+	useEffect(() => {
+		nodesRef.current = Nodes;
+		edgesRef.current = Edges;
+	}, [Nodes, Edges]);
+
+	const handleAddAction = (actionType: ActionType) => {
+		addNode(actionType);
+		requestAnimationFrame(async () => {
+			const layouted = await getLayoutedNodes(
+				nodesRef.current,
+				edgesRef.current,
+				{ "elk.direction": "DOWN" },
+			);
+			setNodes(layouted);
+			setWorkflowAutoLayout(true);
+			fitView({ padding: 0.2 });
+		});
+	};
 	const { resolvedTheme } = useTheme();
 	const { fitView, deleteElements } = useReactFlow();
 	const nodesInitialized = useNodesInitialized();
@@ -71,6 +142,7 @@ function WorkflowChart() {
 			});
 
 			setNodes(layoutedNodes);
+			setWorkflowAutoLayout(true);
 
 			requestAnimationFrame(() => {
 				fitView({
@@ -78,7 +150,7 @@ function WorkflowChart() {
 				});
 			});
 		},
-		[Nodes, Edges, setNodes, fitView],
+		[Nodes, Edges, setNodes, fitView, setWorkflowAutoLayout],
 	);
 
 	const wrapperRef = useRef<HTMLDivElement>(null);
@@ -130,9 +202,16 @@ function WorkflowChart() {
 		setMounted(true);
 	}, []);
 
+	// Auto-layout UNA sola vez por workflow: la primera carga aplica ELK y persiste
+	// `autoLayoutApplied`. Así los reordenamientos manuales (drag de nodos, botones
+	// de layout, conexiones de edges) quedan guardados y no se pisan al recargar.
 	// biome-ignore lint/correctness/useExhaustiveDependencies: On mount
 	useEffect(() => {
 		if (!nodesInitialized) return;
+
+		const workflow = currentWorkflow;
+		if (!workflow || workflow.Nodes.length === 0) return;
+		if (workflow.config?.autoLayoutApplied) return;
 
 		onLayout("DOWN");
 	}, [nodesInitialized]);
@@ -164,7 +243,31 @@ function WorkflowChart() {
 					<Panel position="top-left">
 						<h2>{currentWorkflow.name}</h2>
 					</Panel>
-					<Panel position="top-right">
+					<Panel
+						position="top-right"
+						className="flex flex-col items-end gap-1.5"
+					>
+						<DropdownMenu>
+							<DropdownMenuTrigger
+								render={
+									<Button>
+										<Plus data-icon="inline-start" /> Add action
+									</Button>
+								}
+							/>
+							<DropdownMenuContent align="end" className="w-48">
+								<DropdownMenuGroup>
+									{ADD_ACTION_OPTIONS.map((option) => (
+										<DropdownMenuItem
+											key={option.type}
+											onClick={() => handleAddAction(option.type)}
+										>
+											{option.icon} {option.label}
+										</DropdownMenuItem>
+									))}
+								</DropdownMenuGroup>
+							</DropdownMenuContent>
+						</DropdownMenu>
 						<Button onClick={() => onLayout("DOWN")}>Vertical layout</Button>
 						<Button onClick={() => onLayout("RIGHT")}>Horizontal layout</Button>
 					</Panel>

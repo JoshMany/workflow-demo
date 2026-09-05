@@ -9,6 +9,7 @@ import type {
 	OnNodesDelete,
 } from "@xyflow/react";
 import { addEdge, applyEdgeChanges, applyNodeChanges } from "@xyflow/react";
+import { v4 as uuidv4 } from "uuid";
 import type { StateCreator } from "zustand";
 import { ActionNode } from "@/components/workflow/action-node";
 import TransitionEdge from "@/components/workflow/transition-edge";
@@ -131,6 +132,7 @@ export interface FlowSliceStates {
 
 export interface FlowSliceActions {
 	setNodes: (nodes: ActionNodeType[]) => void;
+	addNode: (actionType: ActionType) => void;
 	onNodesChange: OnNodesChange<ActionNodeType>;
 	onNodesDelete: OnNodesDelete<ActionNodeType>;
 	onEdgesChange: OnEdgesChange<TransitionEdgeType>;
@@ -188,6 +190,72 @@ function reconnectAfterDeletion(
 	);
 }
 
+//* Defaults para un nodo de acción nuevo, según su tipo.
+function createActionData(actionType: ActionType): CustomNodeData {
+	const actionUUID = uuidv4();
+
+	switch (actionType) {
+		case "email":
+			return {
+				actionTitle: "Send Email",
+				actionType,
+				actionUUID,
+				config: {
+					subject: "",
+					recipient: { type: "candidate" },
+					body: "",
+				},
+			};
+		case "internal_notification":
+			return {
+				actionTitle: "Send Notification",
+				actionType,
+				actionUUID,
+				config: { body: "" },
+			};
+		case "questionnaire":
+			return {
+				actionTitle: "Send Questionnaire",
+				actionType,
+				actionUUID,
+				config: { questionnaireUUID: "" },
+			};
+		case "interview":
+			return {
+				actionTitle: "Schedule Interview",
+				actionType,
+				actionUUID,
+				config: { interviewType: "video" },
+			};
+		case "manual_task":
+			return {
+				actionTitle: "Manual Task",
+				actionType,
+				actionUUID,
+				config: { description: "" },
+			};
+		case "condition":
+			return {
+				actionTitle: "Condition",
+				actionType,
+				actionUUID,
+				config: { condition: "" },
+			};
+	}
+}
+
+function createActionNode(
+	actionType: ActionType,
+	index: number,
+): ActionNodeType {
+	return {
+		id: uuidv4(),
+		type: "actionNode",
+		position: { x: 0, y: index * 120 },
+		data: createActionData(actionType),
+	};
+}
+
 export const createFlowSlice: StateCreator<
 	DemoStore,
 	[["zustand/persist", unknown]],
@@ -207,6 +275,23 @@ export const createFlowSlice: StateCreator<
 				Workflows: {
 					...state.Workflows,
 					[uuid]: { ...current, Nodes: nodes },
+				},
+			};
+		}),
+	addNode: (actionType) =>
+		set((state) => {
+			const workflowUUID = state.CurrentWorkflowUUID;
+			const workflow = state.Workflows[workflowUUID];
+			if (!workflow) return state;
+
+			const node = createActionNode(actionType, workflow.Nodes.length);
+			return {
+				Workflows: {
+					...state.Workflows,
+					[workflowUUID]: {
+						...workflow,
+						Nodes: [...workflow.Nodes, node],
+					},
 				},
 			};
 		}),
