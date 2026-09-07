@@ -42,7 +42,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
 					<TooltipProvider>
 						<SidebarProvider>
 							<DemoStoreProvider>
-								<AppSidebar />
+								<AppSidebar collapsible="icon" variant="floating" />
 								<SidebarInset>
 									<AppHeader />
 									<Separator orientation="horizontal" />

@@ -1,14 +1,12 @@
 "use client";
 
 import { Workflow } from "lucide-react";
-import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
 	Sidebar,
 	SidebarContent,
 	SidebarGroup,
 	SidebarGroupContent,
-	SidebarGroupLabel,
 	SidebarHeader,
 	SidebarMenu,
 	SidebarMenuButton,
@@ -22,20 +20,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 	const data = {
 		navMain: [
 			{
-				title: "Main",
+				title: "Workflows",
 				url: "/",
-				items: [
-					{
-						title: "Workflows",
-						url: "/",
-						isActive: currentPath === "/",
-					},
-					{
-						title: "Questionnaires",
-						url: "/questionnaires",
-						isActive: currentPath === "/questionnaires",
-					},
-				],
+				isActive: currentPath === "/",
+				icon: Workflow,
+			},
+			{
+				title: "Questionnaires",
+				url: "/questionnaires",
+				isActive: currentPath === "/questionnaires",
+				icon: Workflow,
 			},
 		],
 	};
@@ -43,33 +37,31 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 	return (
 		<Sidebar {...props}>
 			<SidebarHeader>
-				<Link
-					className="flex items-center gap-2 text-lg font-semibold px-2 py-1"
-					href="/"
+				<SidebarMenuButton
+					size="lg"
+					className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
 				>
-					<Workflow /> Workflow Demo
-				</Link>
+					<div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
+						<Workflow className="size-4" />
+					</div>
+					<span className="text-lg font-semibold">Workflow Demo</span>
+				</SidebarMenuButton>
 			</SidebarHeader>
 			<SidebarContent>
-				{data.navMain.map((item) => (
-					<SidebarGroup key={item.title}>
-						<SidebarGroupLabel>{item.title}</SidebarGroupLabel>
-						<SidebarGroupContent>
-							<SidebarMenu>
-								{item.items.map((item) => (
-									<SidebarMenuItem key={item.title}>
-										<SidebarMenuButton
-											isActive={item.isActive}
-											render={<Link href={item.url} />}
-										>
-											{item.title}
-										</SidebarMenuButton>
-									</SidebarMenuItem>
-								))}
-							</SidebarMenu>
-						</SidebarGroupContent>
-					</SidebarGroup>
-				))}
+				<SidebarGroup>
+					<SidebarGroupContent className="flex flex-col gap-2">
+						<SidebarMenu>
+							{data.navMain.map((item) => (
+								<SidebarMenuItem key={item.title}>
+									<SidebarMenuButton tooltip={item.title}>
+										{item.icon && <item.icon />}
+										<span>{item.title}</span>
+									</SidebarMenuButton>
+								</SidebarMenuItem>
+							))}
+						</SidebarMenu>
+					</SidebarGroupContent>
+				</SidebarGroup>
 			</SidebarContent>
 			<SidebarRail />
 		</Sidebar>
