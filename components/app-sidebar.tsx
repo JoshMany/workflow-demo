@@ -1,12 +1,13 @@
 "use client";
 
-import { Workflow } from "lucide-react";
+import { Form, Shell, Workflow } from "lucide-react";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
 	Sidebar,
 	SidebarContent,
 	SidebarGroup,
-	SidebarGroupContent,
+	SidebarGroupLabel,
 	SidebarHeader,
 	SidebarMenu,
 	SidebarMenuButton,
@@ -29,7 +30,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 				title: "Questionnaires",
 				url: "/questionnaires",
 				isActive: currentPath === "/questionnaires",
-				icon: Workflow,
+				icon: Form,
 			},
 		],
 	};
@@ -42,25 +43,28 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 					className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
 				>
 					<div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-						<Workflow className="size-4" />
+						<Shell className="size-4" />
 					</div>
 					<span className="text-lg font-semibold">Workflow Demo</span>
 				</SidebarMenuButton>
 			</SidebarHeader>
 			<SidebarContent>
 				<SidebarGroup>
-					<SidebarGroupContent className="flex flex-col gap-2">
-						<SidebarMenu>
-							{data.navMain.map((item) => (
-								<SidebarMenuItem key={item.title}>
-									<SidebarMenuButton tooltip={item.title}>
-										{item.icon && <item.icon />}
-										<span>{item.title}</span>
-									</SidebarMenuButton>
-								</SidebarMenuItem>
-							))}
-						</SidebarMenu>
-					</SidebarGroupContent>
+					<SidebarGroupLabel>Platform</SidebarGroupLabel>
+					<SidebarMenu>
+						{data.navMain.map((item) => (
+							<SidebarMenuItem key={item.title}>
+								<SidebarMenuButton
+									render={<Link href={item.url} />}
+									tooltip={item.title}
+									isActive={item.isActive}
+								>
+									{item.icon && <item.icon />}
+									<span>{item.title}</span>
+								</SidebarMenuButton>
+							</SidebarMenuItem>
+						))}
+					</SidebarMenu>
 				</SidebarGroup>
 			</SidebarContent>
 			<SidebarRail />
