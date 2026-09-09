@@ -81,8 +81,23 @@ export type ManualTaskConfig = {
 	assignee?: string;
 	dueDate?: string;
 };
+
+//* Comparison operators supported by a numeric rule (shared by condition nodes
+//* and the `condition` transition edges that branch out of them).
+export type ConditionOperator = "greater_than_or_equal" | "less_than";
+
+//* Which branch an outgoing `condition` edge represents when it leaves a
+//* Condition node: `positive` = the rule is met (pass / yes), `negative` = the
+//* rule is not met (fail / no).
+export type ConditionBranch = "positive" | "negative";
+
 export type ConditionConfig = {
-	condition: string;
+	//* Structured rule: how the candidate's result compares against `value`.
+	operator: ConditionOperator;
+	value: number;
+	//* Human-readable summary of the rule. When the structured fields change, the
+	//* UI keeps it in sync unless the user wrote their own wording.
+	description: string;
 };
 export type ActionNodeType = Node<CustomNodeData, "actionNode">;
 
@@ -113,9 +128,12 @@ export type TransitionEdgeData =
 			transitionUUID: string;
 			transitionType: "condition";
 			condition: {
-				operator: "greater_than_or_equal" | "less_than";
+				operator: ConditionOperator;
 				value: number;
 				description: string;
+				//* `positive` = rama que cumple la regla (yes/pass);
+				//* `negative` = rama complementaria (no/fail).
+				branch: ConditionBranch;
 			};
 	  };
 export type TransitionEdgeType = Edge<TransitionEdgeData, "transitionEdge">;
@@ -239,7 +257,11 @@ function createActionData(actionType: ActionType): CustomNodeData {
 				actionTitle: "Condition",
 				actionType,
 				actionUUID,
-				config: { condition: "" },
+				config: {
+					operator: "greater_than_or_equal",
+					value: 60,
+					description: "",
+				},
 			};
 	}
 }

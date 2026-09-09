@@ -70,7 +70,9 @@ export const initialWorkflowList: Record<string, WorkflowItemType> = {
 					actionType: "condition",
 					actionUUID: "action-004",
 					config: {
-						condition:
+						operator: "greater_than_or_equal",
+						value: 60,
+						description:
 							"Questionnaire score must be greater than or equal to 60%.",
 					},
 				},
@@ -189,7 +191,9 @@ export const initialWorkflowList: Record<string, WorkflowItemType> = {
 					actionType: "condition",
 					actionUUID: "action-010",
 					config: {
-						condition:
+						operator: "greater_than_or_equal",
+						value: 1,
+						description:
 							"Interview evaluation must recommend hiring the applicant.",
 					},
 				},
@@ -364,6 +368,7 @@ export const initialWorkflowList: Record<string, WorkflowItemType> = {
 						operator: "greater_than_or_equal",
 						value: 60,
 						description: "Questionnaire score >= 60%",
+						branch: "positive",
 					},
 				},
 				markerEnd: {
@@ -384,6 +389,7 @@ export const initialWorkflowList: Record<string, WorkflowItemType> = {
 						operator: "less_than",
 						value: 60,
 						description: "Questionnaire score < 60%",
+						branch: "negative",
 					},
 				},
 				markerEnd: {
@@ -472,6 +478,7 @@ export const initialWorkflowList: Record<string, WorkflowItemType> = {
 						operator: "greater_than_or_equal",
 						value: 1,
 						description: "Interview evaluation recommends hiring",
+						branch: "positive",
 					},
 				},
 				markerEnd: {
@@ -492,6 +499,7 @@ export const initialWorkflowList: Record<string, WorkflowItemType> = {
 						operator: "less_than",
 						value: 1,
 						description: "Interview evaluation does not recommend hiring",
+						branch: "negative",
 					},
 				},
 				markerEnd: {

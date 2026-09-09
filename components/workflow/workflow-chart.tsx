@@ -43,6 +43,7 @@ import type {
 	ActionType,
 	TransitionEdgeType,
 } from "@/store/flowSlice";
+import EditConditionNode from "./forms/edit-condition-node";
 import EditEmailNode from "./forms/edit-email-node";
 import EditNotificationNode from "./forms/edit-notification-node";
 import EditQuestionnaireNode from "./forms/edit-questionnaire-node";
@@ -313,6 +314,7 @@ function WorkflowChart() {
 				</div>
 			)}
 
+			<EditConditionNode />
 			<EditEmailNode />
 			<EditNotificationNode />
 			<EditQuestionnaireNode />
