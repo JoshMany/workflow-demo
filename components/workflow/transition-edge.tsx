@@ -5,12 +5,14 @@ import {
 	getBezierPath,
 	useReactFlow,
 } from "@xyflow/react";
+import { useShallow } from "zustand/react/shallow";
 import {
 	Popover,
 	PopoverContent,
 	PopoverTrigger,
 } from "@/components/ui/popover";
 import { buildTransitionDescription } from "@/components/workflow/transition-description";
+import { useDemoStore } from "@/providers/workflow-store-provider";
 import type { ConditionBranch, ConditionOperator } from "@/store/flowSlice";
 import { Button } from "../ui/button";
 import type { ActionType, TransitionEdgeType, transitionTypes } from "./types";
@@ -46,6 +48,15 @@ export default function TransitionEdge({
 	});
 
 	const { getNode } = useReactFlow();
+
+	const { setEdgeDialogId, setEdgeDialogIsNew, toggleEdgeDialog } =
+		useDemoStore(
+			useShallow((state) => ({
+				setEdgeDialogId: state.setEdgeDialogId,
+				setEdgeDialogIsNew: state.setEdgeDialogIsNew,
+				toggleEdgeDialog: state.toggleEdgeDialog,
+			})),
+		);
 
 	const sourceNode = getNode(source);
 	const targetNode = getNode(target);
@@ -156,6 +167,19 @@ export default function TransitionEdge({
 									</p>
 								)}
 							</div>
+							{conditionData && (
+								<Button
+									variant="outline"
+									size="sm"
+									onClick={() => {
+										setEdgeDialogId(id);
+										setEdgeDialogIsNew(false);
+										toggleEdgeDialog(true);
+									}}
+								>
+									Edit condition edge
+								</Button>
+							)}
 						</div>
 					</PopoverContent>
 				</Popover>

@@ -1,4 +1,5 @@
 import type {
+	Connection,
 	Edge,
 	EdgeTypes,
 	Node,
@@ -8,7 +9,7 @@ import type {
 	OnNodesChange,
 	OnNodesDelete,
 } from "@xyflow/react";
-import { addEdge, applyEdgeChanges, applyNodeChanges } from "@xyflow/react";
+import { applyEdgeChanges, applyNodeChanges, MarkerType } from "@xyflow/react";
 import { v4 as uuidv4 } from "uuid";
 import type { StateCreator } from "zustand";
 import { ActionNode } from "@/components/workflow/action-node";
@@ -155,6 +156,12 @@ export interface FlowSliceActions {
 	onNodesDelete: OnNodesDelete<ActionNodeType>;
 	onEdgesChange: OnEdgesChange<TransitionEdgeType>;
 	onConnect: OnConnect;
+	/** Crea una arista de condici\u00f3n desde un nodo Condition (m\u00e1x. 2 salientes).
+	 * Devuelve el id de la arista creada, o `null` si no est\u00e1 permitido. */
+	connectConditionEdge: (connection: Connection) => string | null;
+	removeEdge: (edgeId: string) => void;
+	getEdgeData: (edgeId: string) => TransitionEdgeData | undefined;
+	setEdgeData: (edgeId: string, data: TransitionEdgeData) => void;
 	getNodeData: (nodeId: string) => CustomNodeData | undefined;
 	setNodeData: (nodeId: string, data: CustomNodeData) => void;
 }
@@ -206,6 +213,42 @@ function reconnectAfterDeletion(
 	return result.filter(
 		(edge) => !deletedIds.has(edge.source) && !deletedIds.has(edge.target),
 	);
+}
+
+//* Aristas de tipo `condition` que salen de un nodo (máximo 2 por nodo).
+function getConditionOutgoingEdges(
+	edges: TransitionEdgeType[],
+	sourceId: string,
+): TransitionEdgeType[] {
+	return edges.filter(
+		(edge) =>
+			edge.source === sourceId && edge.data?.transitionType === "condition",
+	);
+}
+
+//* Operador complementario: la rama negativa evalúa lo contrario que la positiva.
+function complementOperator(operator: ConditionOperator): ConditionOperator {
+	return operator === "greater_than_or_equal"
+		? "less_than"
+		: "greater_than_or_equal";
+}
+
+//* Construye una arista de transición completa (id, tipo custom, data, marcador).
+function createTransitionEdge(
+	connection: Connection,
+	data: TransitionEdgeData,
+): TransitionEdgeType {
+	return {
+		id: uuidv4(),
+		source: connection.source,
+		target: connection.target,
+		sourceHandle: connection.sourceHandle ?? undefined,
+		targetHandle: connection.targetHandle ?? undefined,
+		type: "transitionEdge",
+		animated: true,
+		data,
+		markerEnd: { type: MarkerType.ArrowClosed },
+	};
 }
 
 //* Defaults para un nodo de acción nuevo, según su tipo.
@@ -393,13 +436,124 @@ export const createFlowSlice: StateCreator<
 		set((state) => {
 			const uuid = state.CurrentWorkflowUUID;
 			const current = state.Workflows[uuid];
+			if (!current) return {};
+
+			const edge = createTransitionEdge(connection, {
+				transitionUUID: uuidv4(),
+				transitionType: "immediate",
+			});
+
+			return {
+				Workflows: {
+					...state.Workflows,
+					[uuid]: { ...current, Edges: [...current.Edges, edge] },
+				},
+			};
+		}),
+	connectConditionEdge: (connection) => {
+		const state = get();
+		const uuid = state.CurrentWorkflowUUID;
+		const workflow = state.Workflows[uuid];
+		if (!workflow) return null;
+
+		const sourceNode = workflow.Nodes.find((n) => n.id === connection.source);
+		if (sourceNode?.data.actionType !== "condition") return null;
+
+		// Un nodo Condition solo puede tener 2 aristas salientes
+		// (positiva y negativa).
+		const outgoing = getConditionOutgoingEdges(
+			workflow.Edges,
+			connection.source,
+		);
+		if (outgoing.length >= 2) return null;
+
+		const usedBranches = new Set(
+			outgoing.map((edge) =>
+				edge.data?.transitionType === "condition"
+					? edge.data.condition.branch
+					: undefined,
+			),
+		);
+		const branch: ConditionBranch = usedBranches.has("positive")
+			? "negative"
+			: "positive";
+
+		// Prefill: la rama positiva hereda la regla del nodo; la negativa usa su
+		// complemento. El diálogo permite ajustarlo.
+		const rule = sourceNode.data.config;
+		const condition =
+			branch === "positive"
+				? {
+						operator: rule.operator,
+						value: rule.value,
+						description: rule.description,
+						branch,
+					}
+				: {
+						operator: complementOperator(rule.operator),
+						value: rule.value,
+						description: "",
+						branch,
+					};
+
+		const edge = createTransitionEdge(connection, {
+			transitionUUID: uuidv4(),
+			transitionType: "condition",
+			condition,
+		});
+
+		set((current) => {
+			const currentWorkflow = current.Workflows[uuid];
+			if (!currentWorkflow) return {};
+
+			return {
+				Workflows: {
+					...current.Workflows,
+					[uuid]: {
+						...currentWorkflow,
+						Edges: [...currentWorkflow.Edges, edge],
+					},
+				},
+			};
+		});
+
+		return edge.id;
+	},
+	removeEdge: (edgeId) =>
+		set((state) => {
+			const uuid = state.CurrentWorkflowUUID;
+			const workflow = state.Workflows[uuid];
+			if (!workflow) return {};
 
 			return {
 				Workflows: {
 					...state.Workflows,
 					[uuid]: {
-						...current,
-						Edges: addEdge(connection, current.Edges),
+						...workflow,
+						Edges: workflow.Edges.filter((edge) => edge.id !== edgeId),
+					},
+				},
+			};
+		}),
+	getEdgeData: (edgeId) => {
+		const state = get();
+		const workflow = state.Workflows[state.CurrentWorkflowUUID];
+		const edge = workflow?.Edges.find((e) => e.id === edgeId);
+		return edge?.data;
+	},
+	setEdgeData: (edgeId, data) =>
+		set((state) => {
+			const workflow = state.Workflows[state.CurrentWorkflowUUID];
+			if (!workflow) return {};
+
+			return {
+				Workflows: {
+					...state.Workflows,
+					[state.CurrentWorkflowUUID]: {
+						...workflow,
+						Edges: workflow.Edges.map((edge) =>
+							edge.id === edgeId ? { ...edge, data } : edge,
+						),
 					},
 				},
 			};

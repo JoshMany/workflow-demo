@@ -2,6 +2,7 @@
 
 import {
 	Background,
+	type Connection,
 	Controls,
 	MiniMap,
 	Panel,
@@ -36,6 +37,7 @@ import {
 	DropdownMenuItem,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { toast } from "@/components/ui/toast";
 import { getLayoutedNodes } from "@/components/workflow/elk-layout";
 import { useDemoStore } from "@/providers/workflow-store-provider";
 import type {
@@ -43,6 +45,7 @@ import type {
 	ActionType,
 	TransitionEdgeType,
 } from "@/store/flowSlice";
+import EditConditionEdge from "./forms/edit-condition-edge";
 import EditConditionNode from "./forms/edit-condition-node";
 import EditEmailNode from "./forms/edit-email-node";
 import EditNotificationNode from "./forms/edit-notification-node";
@@ -80,6 +83,10 @@ function WorkflowChart() {
 		setNodeDialogId,
 		toggleNodeDialog,
 		setWorkflowAutoLayout,
+		connectConditionEdge,
+		setEdgeDialogId,
+		setEdgeDialogIsNew,
+		toggleEdgeDialog,
 	} = useDemoStore(
 		useShallow((state) => ({
 			Workflows: state.Workflows,
@@ -95,6 +102,10 @@ function WorkflowChart() {
 			toggleNodeDialog: state.toggleNodeDialog,
 			addNode: state.addNode,
 			setWorkflowAutoLayout: state.setWorkflowAutoLayout,
+			connectConditionEdge: state.connectConditionEdge,
+			setEdgeDialogId: state.setEdgeDialogId,
+			setEdgeDialogIsNew: state.setEdgeDialogIsNew,
+			toggleEdgeDialog: state.toggleEdgeDialog,
 		})),
 	);
 
@@ -125,6 +136,45 @@ function WorkflowChart() {
 			fitView({ padding: 0.2 });
 		});
 	};
+
+	const handleConnect = useCallback(
+		(connection: Connection) => {
+			const sourceNode = nodesRef.current.find(
+				(node) => node.id === connection.source,
+			);
+
+			// Aristas que salen de un nodo Condition: se crean ya como transición
+			// de condición y se abre el diálogo para configurar su rama y regla.
+			if (sourceNode?.data.actionType === "condition") {
+				const edgeId = connectConditionEdge(connection);
+
+				if (!edgeId) {
+					toast.add({
+						title: "Limit reached",
+						description:
+							"A Condition node can only have 2 outgoing edges (Yes and No).",
+						type: "error",
+					});
+					return;
+				}
+
+				setEdgeDialogId(edgeId);
+				setEdgeDialogIsNew(true);
+				toggleEdgeDialog(true);
+				return;
+			}
+
+			onConnect(connection);
+		},
+		[
+			connectConditionEdge,
+			onConnect,
+			setEdgeDialogId,
+			setEdgeDialogIsNew,
+			toggleEdgeDialog,
+		],
+	);
+
 	const { resolvedTheme } = useTheme();
 	const { fitView, deleteElements } = useReactFlow();
 	const nodesInitialized = useNodesInitialized();
@@ -230,7 +280,7 @@ function WorkflowChart() {
 					onEdgesChange={onEdgesChange}
 					nodeTypes={nodeTypes}
 					edgeTypes={edgeTypes}
-					onConnect={onConnect}
+					onConnect={handleConnect}
 					onNodesDelete={onNodesDelete}
 					fitView
 					fitViewOptions={{
@@ -314,6 +364,7 @@ function WorkflowChart() {
 				</div>
 			)}
 
+			<EditConditionEdge />
 			<EditConditionNode />
 			<EditEmailNode />
 			<EditNotificationNode />

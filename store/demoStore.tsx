@@ -30,6 +30,15 @@ export type DemoStore = WorkflowSlice &
 		openDialog: boolean;
 		toggleNodeDialog: (state: boolean) => void;
 		setNodeDialogId: (nodeId: string | null) => void;
+
+		// Edge Dialog State
+		edgeDialogId: string | null;
+		openEdgeDialog: boolean;
+		/** `true` cuando la arista se acaba de crear: si se cancela, se elimina. */
+		edgeDialogIsNew: boolean;
+		toggleEdgeDialog: (state: boolean) => void;
+		setEdgeDialogId: (edgeId: string | null) => void;
+		setEdgeDialogIsNew: (isNew: boolean) => void;
 	};
 
 export const createDemoStore = create<DemoStore>()(
@@ -60,6 +69,14 @@ export const createDemoStore = create<DemoStore>()(
 			openDialog: false,
 			toggleNodeDialog: (state) => set({ openDialog: state }),
 			setNodeDialogId: (nodeId) => set({ nodeDialogId: nodeId }),
+
+			// Edge Dialog State
+			edgeDialogId: null,
+			openEdgeDialog: false,
+			edgeDialogIsNew: false,
+			toggleEdgeDialog: (state) => set({ openEdgeDialog: state }),
+			setEdgeDialogId: (edgeId) => set({ edgeDialogId: edgeId }),
+			setEdgeDialogIsNew: (isNew) => set({ edgeDialogIsNew: isNew }),
 		}),
 		{
 			name: "workflow-storage",
